@@ -15,7 +15,7 @@ from lindenfret.fretboard import (
     check_fingering,
     enumerate_fingerings,
     fingers_needed,
-    hand_positions,
+    fret_windows,
 )
 from lindenfret.report import unplayable_chords
 
@@ -32,7 +32,7 @@ def fingering(*frets):
 
 
 def voicer(**overrides):
-    return Voicer(FRETBOARD, PATTERN, dataclasses.replace(CONFIG.voicer, **overrides))
+    return Voicer(FRETBOARD, CONFIG.pattern, dataclasses.replace(CONFIG.voicer, **overrides))
 
 
 # Fingerings the reference itself plays, from tools/analyze_reference.py.
@@ -96,7 +96,7 @@ chords = st.sampled_from(
 
 
 @settings(max_examples=150, deadline=None)
-@given(chord=chords, region=st.sampled_from(hand_positions(FRETBOARD) + [NECK]))
+@given(chord=chords, region=st.sampled_from(fret_windows(FRETBOARD, CONFIG.pattern) + [NECK]))
 def test_every_enumerated_fingering_passes_the_independent_check(chord, region):
     mode, tonic, index = chord
     spec = TABLE.chords[(mode, tonic)][index]

@@ -2,7 +2,7 @@
 
 Design: [design.md](design.md)
 
-Five phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDI, as summarized in the design: the pattern, rhythm, form, palette and planing idiom. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
+Six phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDIs, as summarized in the design: the pattern, rhythm, form, palette, planing idiom and left-hand limits. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
 
 | Phase | Scope | Exit gate |
 | --- | --- | --- |
@@ -11,6 +11,7 @@ Five phases, built in order. Each ends in a gate you can check from the command 
 | 2. Grammar and harmony | Two-level bracketed L-system, alphabet, length control, tonal centers and modulation, weighted graph, cadences | Changing one rule visibly changes the section plan in `inspect`. `inspect` shows every bar's center, and centers change only at `M`, `]` and section starts |
 | 3. Rendering and export | Pattern with bar repeats and let-ring, ritardandos, music21 score with no key signature, MIDI, MusicXML, manifest | The reference test passes, MusicXML opens in MuseScore with correct notes, spelling and rhythm, and `regenerate` reproduces byte-identical MIDI |
 | 4. Villa-Lobos idiom | Planing mode, Etude 1 preset, batch and curation | A listening pass over 20 seeds finds variants worth practicing |
+| 5. Etude 2 | Preset-level palette key, optional tones and notation; contour patterns over ladders of stops; Etude 2 reference analysis and preset | Etude 1's plans are unchanged apart from its preset hash, every Etude 2 reference bar is playable under its preset, and a listening pass over 20 Etude 2 seeds finds variants worth practicing |
 
 ## Phase 0: Foundation
 
@@ -55,3 +56,14 @@ Five phases, built in order. Each ends in a gate you can check from the command 
 - [x] Etude 1 preset: graph-mode sections open and close the piece, with planing sequences between them.
 - [x] Batch of 20 generated: `lindenfret batch --config configs/etude1.toml --count 20 --first-seed 1` wrote `out/etude1-1` to `out/etude1-20`.
 - [ ] Listen, and record the keepers with their config hash in `curated.toml`.
+
+## Phase 5: Etude 2
+
+- [x] Move Etude 1 assumptions into the config: `[palette] tonic` and `optional_intervals`, and a `[notation]` table for the title and opening direction.
+- [x] Pattern kinds: a preset sets either `strings` (Etude 1) or `contour` (Etude 2). A contour also sets `notes_per_string`, `hand_positions` and `max_slide`, and the voicer's `shift` weight.
+- [x] Ladders (`ladder.py`): enumeration with slides along a string, an independent `check_ladder()`, a fast existence check for the harmony stage, and rendering that stops a fretted note when the hand slides.
+- [x] `analyze_reference.py` handles contours: the bars that follow the pattern, their ladders, median accents, and whether each ladder is playable under the preset.
+- [x] Etude 2 preset (`configs/etude2.toml`): palette in A from bars 1–18 and 22–47, left-hand limits measured from the reference, reference tests and golden snapshots.
+- [x] Both presets' velocities are the reference's medians, which `analyze_reference.py` now computes.
+- [x] Batch of 20 generated: `lindenfret batch --config configs/etude2.toml --count 20 --first-seed 1` wrote `out/etude2-1` to `out/etude2-20`.
+- [ ] Listen to a batch of 20 Etude 2 seeds, tune the minor palette, form rules and `shift` weight by ear, and record keepers in `curated.toml`.

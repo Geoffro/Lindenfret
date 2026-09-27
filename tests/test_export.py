@@ -10,7 +10,7 @@ from lindenfret.config import parse_config_text
 from lindenfret.export import GUITAR_PROGRAM, generate
 from lindenfret.fretboard import Fingering
 from lindenfret.render import render_bar
-from lindenfret.score import HOLD_DIRECTION, _respell_as_chord
+from lindenfret.score import _respell_as_chord
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 TEXT = PRESET.read_text(encoding="utf-8")
@@ -92,7 +92,7 @@ def test_musicxml_round_trip(written, parsed):
 def test_musicxml_marks_the_hold_and_the_ritardandos(written, parsed):
     words = [e.content for e in parsed.recurse().getElementsByClass(expressions.TextExpression)]
     marks = [mark for m in written.rendering.measures for mark in m.marks]
-    assert words == [HOLD_DIRECTION, *marks]
+    assert words == [CONFIG.notation.direction, *marks]
     assert "rit." in marks and "a tempo" in marks
 
 

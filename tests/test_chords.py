@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from lindenfret.chords import ChordError, build_chord_table, parse_chord
-from lindenfret.config import MODES, load_config
+from lindenfret.config import MODES, Palette, load_config
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 E, F_SHARP, G, A, B, C, C_SHARP, D_SHARP = 4, 6, 7, 9, 11, 0, 1, 3
@@ -25,6 +25,19 @@ def test_slash_chord_requires_its_bass():
     em_over_b = parse_chord("Em/B")
     assert em_over_b.bass == B
     assert em_over_b.required == {E, G, B}  # the fifth is required when it's the bass
+
+
+def test_optional_intervals_choose_the_tones_a_voicing_may_leave_out():
+    assert parse_chord("Em", optional=()).required == {E, G, B}
+    assert parse_chord("E7", optional=(7, 10)).required == {E, 8}
+
+
+def test_a_palette_transposes_the_same_from_any_tonic():
+    in_e = build_chord_table(Palette("E", frozenset({7}), ("Em", "F#m7b5/E", "B7/F#"), ("E", "A/E")))
+    in_b_flat = build_chord_table(Palette("Bb", frozenset({7}), ("Bbm", "Cm7b5/Bb", "F7/C"), ("Bb", "Eb/Bb")))
+    assert in_b_flat.written_in == "Bb"
+    assert in_b_flat.chords == in_e.chords
+    assert in_b_flat.tonic_names == in_e.tonic_names
 
 
 def test_half_diminished_requires_its_flat_fifth():

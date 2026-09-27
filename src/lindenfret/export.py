@@ -40,7 +40,7 @@ def generate(config: Config, config_text: str, name: str, seed: int, out: Path) 
     folder = out / f"{name}-{seed}"
     folder.mkdir(parents=True, exist_ok=True)
     write_midi(rendering, config, folder / MIDI_FILE)
-    build_score(rendering, config, f"Etude 1 variant, seed {seed}").write(
+    build_score(rendering, config, f"{config.notation.title}, seed {seed}").write(
         "musicxml", fp=str(folder / MUSICXML_FILE)
     )
     (folder / MANIFEST_FILE).write_text(

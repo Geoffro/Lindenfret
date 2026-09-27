@@ -1,0 +1,1157 @@
+{
+  "preset": "etude2",
+  "seed": 2,
+  "config_sha256": "12712348ad16f84c9b51c25c21329e7f8b882e531c1eb0eff089e7a240308804",
+  "form": [
+    "S",
+    "ABA"
+  ],
+  "sections": [
+    {
+      "index": 0,
+      "name": "A",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "FFK",
+        "F[+F]FF[+F]FK"
+      ],
+      "attempts": 1
+    },
+    {
+      "index": 1,
+      "name": "B",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "FMF",
+        "FMFMF[MF]F",
+        "F[MF]FMFMFMFMF[MFMF]FMF"
+      ],
+      "attempts": 1
+    },
+    {
+      "index": 2,
+      "name": "A",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "F[+F]F",
+        "F[+F]F[+F[+F]F]F[+F]F"
+      ],
+      "attempts": 1
+    }
+  ],
+  "bars": [
+    {
+      "bar": 1,
+      "section": 0,
+      "center": "D major",
+      "chord": "DM9/C#",
+      "frets": [
+        [],
+        [
+          4,
+          5
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          2,
+          5
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "start: D major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 2,
+      "section": 0,
+      "center": "D major",
+      "chord": "Bbmaj7/D",
+      "frets": [
+        [],
+        [
+          5,
+          8
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          10
+        ],
+        [
+          10,
+          13
+        ]
+      ],
+      "region": [
+        1,
+        13
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 3,
+      "section": 0,
+      "center": "D major",
+      "chord": "B9",
+      "frets": [
+        [
+          7
+        ],
+        [
+          6
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7
+        ],
+        [
+          7,
+          9
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 4,
+      "section": 0,
+      "center": "D major",
+      "chord": "A9",
+      "frets": [
+        [],
+        [
+          0,
+          7
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          8
+        ],
+        [
+          7,
+          9
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 5,
+      "section": 0,
+      "center": "D major",
+      "chord": "Am/E",
+      "frets": [
+        [
+          0,
+          5
+        ],
+        [
+          7
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          9
+        ],
+        [
+          10
+        ],
+        [
+          8,
+          12
+        ]
+      ],
+      "region": [
+        1,
+        13
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 6,
+      "section": 0,
+      "center": "D major",
+      "chord": "A7/E",
+      "frets": [
+        [
+          0
+        ],
+        [
+          0,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          6
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          5
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 7,
+      "section": 0,
+      "center": "D major",
+      "chord": "A/E",
+      "frets": [
+        [
+          0
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          7
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          10
+        ],
+        [
+          9,
+          12
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 8,
+      "section": 0,
+      "center": "D major",
+      "chord": "DM9/C#",
+      "frets": [
+        [],
+        [
+          4
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          9,
+          12
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 9,
+      "section": 1,
+      "center": "A major",
+      "chord": "A",
+      "frets": [
+        [
+          5
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          7
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          10
+        ],
+        [
+          9,
+          12
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "section: fifth_up to A major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 10,
+      "section": 1,
+      "center": "Db major",
+      "chord": "E#dim7/D",
+      "frets": [
+        [],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          9
+        ],
+        [
+          7,
+          10
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "[",
+        "M third_up: Db major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 11,
+      "section": 1,
+      "center": "A major",
+      "chord": "AM9/G#",
+      "frets": [
+        [
+          4
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          4,
+          6
+        ],
+        [],
+        [
+          0,
+          5
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 12,
+      "section": 1,
+      "center": "A major",
+      "chord": "D#m7b5/A",
+      "frets": [
+        [],
+        [
+          0,
+          4
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          9
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "M stay: A major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 13,
+      "section": 1,
+      "center": "Bb major",
+      "chord": "Ddim7/Cb",
+      "frets": [
+        [
+          7
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          7,
+          10
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "M semitone_up: Bb major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 14,
+      "section": 1,
+      "center": "F major",
+      "chord": "A7b9",
+      "frets": [
+        [],
+        [
+          0,
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          6
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          5,
+          6
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "M fifth_up: F major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 15,
+      "section": 1,
+      "center": "C major",
+      "chord": "E9/B",
+      "frets": [
+        [
+          7
+        ],
+        [],
+        [
+          0,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          4,
+          7
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "M fifth_up: C major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 16,
+      "section": 1,
+      "center": "F major",
+      "chord": "A9/E",
+      "frets": [
+        [
+          0,
+          5
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [],
+        [
+          0
+        ],
+        [
+          0,
+          7
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "[",
+        "M fifth_down: F major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 17,
+      "section": 1,
+      "center": "F# major",
+      "chord": "F#",
+      "frets": [
+        [
+          2
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          4
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          7
+        ],
+        [
+          6,
+          9
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "M semitone_up: F# major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 18,
+      "section": 1,
+      "center": "C major",
+      "chord": "A9",
+      "frets": [
+        [],
+        [
+          0,
+          4
+        ],
+        [
+          2
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 19,
+      "section": 1,
+      "center": "C minor",
+      "chord": "D7",
+      "frets": [
+        [],
+        [
+          5
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          8,
+          10
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "M parallel: C minor"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 20,
+      "section": 2,
+      "center": "F minor",
+      "chord": "Fm",
+      "frets": [
+        [
+          1,
+          4
+        ],
+        [
+          3
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          5
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          8
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "section: fifth_down to F minor"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 21,
+      "section": 2,
+      "center": "F minor",
+      "chord": "Cm/G",
+      "frets": [
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          8
+        ],
+        [
+          8,
+          11
+        ]
+      ],
+      "region": [
+        1,
+        13
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 22,
+      "section": 2,
+      "center": "F minor",
+      "chord": "G7",
+      "frets": [
+        [
+          3
+        ],
+        [
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 23,
+      "section": 2,
+      "center": "F minor",
+      "chord": "Fm",
+      "frets": [
+        [
+          1,
+          4
+        ],
+        [
+          3
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "region": [
+        1,
+        13
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 24,
+      "section": 2,
+      "center": "F minor",
+      "chord": "C9/G",
+      "frets": [
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "region": [
+        2,
+        14
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 2,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 25,
+      "section": 2,
+      "center": "F minor",
+      "chord": "C9/G",
+      "frets": [
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "region": [
+        1,
+        13
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 26,
+      "section": 2,
+      "center": "F minor",
+      "chord": "Fm",
+      "frets": [
+        [
+          1,
+          4
+        ],
+        [
+          3
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          4,
+          8
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 27,
+      "section": 2,
+      "center": "F minor",
+      "chord": "C7/G",
+      "frets": [
+        [
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "region": [
+        1,
+        13
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 28,
+      "section": 2,
+      "center": "F minor",
+      "chord": "C/G",
+      "frets": [
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          2
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          8,
+          12
+        ]
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    }
+  ]
+}

@@ -14,7 +14,7 @@ from lindenfret.pipeline import plan_piece
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONFIG = load_config(PRESET)
 TABLE = build_chord_table(CONFIG.palette)
-VOICER = Voicer(CONFIG.fretboard, CONFIG.pattern.strings, CONFIG.voicer)
+VOICER = Voicer(CONFIG.fretboard, CONFIG.pattern, CONFIG.voicer)
 SEEDS = range(60)
 
 

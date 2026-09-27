@@ -14,7 +14,7 @@ PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONFIG = load_config(PRESET)
 TABLE = build_chord_table(CONFIG.palette)
 GRAPH = ChordGraph(TABLE, CONFIG.graph, CONFIG.palette)
-VOICER = Voicer(CONFIG.fretboard, CONFIG.pattern.strings, CONFIG.voicer)
+VOICER = Voicer(CONFIG.fretboard, CONFIG.pattern, CONFIG.voicer)
 E_MINOR = Center(4, "minor")
 LOW = (0, 3)  # E minor has playable chords here; G# minor, a major third up, has none
 

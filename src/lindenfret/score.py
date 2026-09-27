@@ -1,8 +1,8 @@
-"""Build the notation: one guitar part of single-line 16th notes, no key signature.
+"""Build the notation: one guitar part of single-line notes, no key signature.
 
 Pitches are spelled from their chords and written at sounding pitch under a
-treble clef an octave down, as guitar music is. A direction at the start
-asks for every note to be held to the end of its bar.
+treble clef an octave down, as guitar music is. The config's direction, such
+as how long notes ring, is written at the start.
 """
 
 from __future__ import annotations
@@ -14,8 +14,6 @@ from music21 import clef, expressions, instrument, metadata, meter, note, pitch,
 
 from lindenfret.config import Config
 from lindenfret.render import Rendering
-
-HOLD_DIRECTION = "hold every note to the end of the bar"
 
 
 def build_score(rendering: Rendering, config: Config, title: str) -> stream.Score:
@@ -31,7 +29,8 @@ def build_score(rendering: Rendering, config: Config, title: str) -> stream.Scor
             measure.insert(0, clef.Treble8vbClef())
             measure.insert(0, meter.TimeSignature(f"{config.meter.beats}/{config.meter.beat_unit}"))
             measure.insert(0, tempo.MetronomeMark(number=config.meter.tempo, referent=note.Note(type="quarter")))
-            measure.insert(0, expressions.TextExpression(HOLD_DIRECTION))
+            if config.notation.direction:
+                measure.insert(0, expressions.TextExpression(config.notation.direction))
         for mark in m.marks:
             measure.insert(0, expressions.TextExpression(mark))
         respelled = _respell_as_chord(m.notes) if m.bar.chord is None else {}

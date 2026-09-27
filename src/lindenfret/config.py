@@ -33,6 +33,7 @@ CENTER_MOVES = (
 )
 SHAPE_TYPES = ("dim7", "augmented", "any")
 VOICER_WEIGHTS = ("movement", "span", "open_strings", "doubling")
+CONTOUR_WEIGHTS = ("shift",)  # voicer weights that only a contour pattern needs
 NOTE_VALUES = {"32nd": 0.125, "16th": 0.25, "8th": 0.5, "quarter": 1.0}
 PLANING_FORBIDDEN = frozenset("MK")  # planing has no center to move or cadence to
 MAX_FRET_LIMIT = 24
@@ -47,6 +48,12 @@ _TIME_SIGNATURE_RE = re.compile(r"^(\d+)/(\d+)$")
 
 class ConfigError(ValueError):
     """The config file is malformed or inconsistent."""
+
+
+@dataclass(frozen=True)
+class Notation:
+    title: str  # the score's title; the seed is added
+    direction: str  # a text direction at the start of the score, or "" for none
 
 
 @dataclass(frozen=True)
@@ -89,10 +96,26 @@ class VoicerSettings:
 
 @dataclass(frozen=True)
 class Pattern:
-    strings: tuple[int, ...]
+    """The right hand's notes in one bar, as a string pattern or a contour.
+
+    A string pattern names the string each note plucks, and the left hand
+    holds one fret per string. A contour names the stop each note plays,
+    counting up the bar's ladder of stops from 0; see ladder.py.
+    """
+
+    strings: tuple[int, ...]  # the string each note plucks; empty for a contour
+    contour: tuple[int, ...]  # the stop each note plays; empty for a string pattern
     note: str
     note_quarters: float
     velocities: tuple[int, ...]  # MIDI velocity for each note of the pattern
+    notes_per_string: int  # stops one string may carry; 1 for a string pattern
+    hand_positions: int  # hand positions one bar may use; 1 for a string pattern
+    max_slide: int  # frets the hand may slide to reach a new position; 0 for a string pattern
+
+    @property
+    def stops(self) -> int:
+        """Stops in a contour's ladder."""
+        return max(self.contour) + 1
 
 
 @dataclass(frozen=True)
@@ -104,6 +127,8 @@ class Centers:
 
 @dataclass(frozen=True)
 class Palette:
+    tonic: str  # the key the chords are written in, e.g. "E"
+    optional_intervals: frozenset[int]  # semitones above a chord's root that a voicing may leave out
     minor: tuple[str, ...]
     major: tuple[str, ...]
 
@@ -136,6 +161,7 @@ class Section:
 
 @dataclass(frozen=True)
 class Config:
+    notation: Notation
     meter: Meter
     pattern: Pattern
     fretboard: Fretboard
@@ -164,14 +190,16 @@ def parse_config(data: Mapping[str, Any]) -> Config:
     _check_keys(
         data,
         required={
-            "meter", "pattern", "fretboard", "voicer", "centers", "palette", "graph", "form", "sections"
+            "notation", "meter", "pattern", "fretboard", "voicer", "centers", "palette", "graph", "form",
+            "sections",
         },
         where="config",
     )
+    notation = _parse_notation(data["notation"])
     meter = _parse_meter(data["meter"])
     fretboard = _parse_fretboard(data["fretboard"])
-    voicer = _parse_voicer(data["voicer"], fretboard)
     pattern = _parse_pattern(data["pattern"], meter, fretboard)
+    voicer = _parse_voicer(data["voicer"], fretboard, pattern)
     centers = _parse_centers(data["centers"])
     palette = _parse_palette(data["palette"])
     graph = _parse_graph(data["graph"], palette)
@@ -181,8 +209,11 @@ def parse_config(data: Mapping[str, Any]) -> Config:
     sections = {
         name: _parse_section(name, table, fretboard) for name, table in sections_table.items()
     }
+    for section in sections.values():
+        if section.harmony == "planing" and pattern.contour:
+            raise ConfigError(f"sections.{section.name}: planing needs a string pattern, not a contour")
     form = _parse_form(data["form"], sections)
-    return Config(meter, pattern, fretboard, voicer, centers, palette, graph, form, sections)
+    return Config(notation, meter, pattern, fretboard, voicer, centers, palette, graph, form, sections)
 
 
 def parse_region(text: str, max_fret: int, where: str = "region") -> tuple[int, int]:
@@ -215,6 +246,12 @@ def pitch_class(name: str) -> int:
 
 
 # --- tables ---------------------------------------------------------------
+
+
+def _parse_notation(value: Any) -> Notation:
+    t = _as_table(value, "notation")
+    _check_keys(t, required={"title", "direction"}, where="notation")
+    return Notation(_as_str(t["title"], "notation.title"), _as_str(t["direction"], "notation.direction"))
 
 
 def _parse_meter(value: Any) -> Meter:
@@ -269,7 +306,7 @@ def _parse_fretboard(value: Any) -> Fretboard:
     return Fretboard(open_midi, max_span, max_fret, max_fingers, tension_strings)
 
 
-def _parse_voicer(value: Any, fretboard: Fretboard) -> VoicerSettings:
+def _parse_voicer(value: Any, fretboard: Fretboard, pattern: Pattern) -> VoicerSettings:
     t = _as_table(value, "voicer")
     _check_keys(
         t, required={"comfortable_span", "top_candidates", "temperature", "weights"}, where="voicer"
@@ -284,8 +321,9 @@ def _parse_voicer(value: Any, fretboard: Fretboard) -> VoicerSettings:
     if temperature < 0:
         raise ConfigError("voicer.temperature: must not be negative")
     weights = _as_table(t["weights"], "voicer.weights")
-    _check_keys(weights, required=set(VOICER_WEIGHTS), where="voicer.weights")
-    parsed = {name: _as_number(weights[name], f"voicer.weights.{name}") for name in VOICER_WEIGHTS}
+    names = VOICER_WEIGHTS + (CONTOUR_WEIGHTS if pattern.contour else ())
+    _check_keys(weights, required=set(names), where="voicer.weights")
+    parsed = {name: _as_number(weights[name], f"voicer.weights.{name}") for name in names}
     if any(w < 0 for w in parsed.values()):
         raise ConfigError("voicer.weights: must not be negative")
     return VoicerSettings(comfortable_span, top_candidates, temperature, parsed)
@@ -293,30 +331,53 @@ def _parse_voicer(value: Any, fretboard: Fretboard) -> VoicerSettings:
 
 def _parse_pattern(value: Any, meter: Meter, fretboard: Fretboard) -> Pattern:
     t = _as_table(value, "pattern")
-    _check_keys(t, required={"strings", "note", "velocities"}, where="pattern")
-    strings = tuple(
-        _as_int(s, "pattern.strings") for s in _as_list(t["strings"], "pattern.strings")
-    )
-    if not strings:
-        raise ConfigError("pattern.strings: must not be empty")
-    _check_strings(strings, fretboard.string_count, "pattern.strings")
+    if ("strings" in t) == ("contour" in t):
+        raise ConfigError("pattern: needs exactly one of strings or contour")
+    kind = "strings" if "strings" in t else "contour"
+    contour_keys = {"notes_per_string", "hand_positions", "max_slide"} if kind == "contour" else set()
+    _check_keys(t, required={kind, "note", "velocities"} | contour_keys, where="pattern")
+    notes = tuple(_as_int(n, f"pattern.{kind}") for n in _as_list(t[kind], f"pattern.{kind}"))
+    if not notes:
+        raise ConfigError(f"pattern.{kind}: must not be empty")
+    notes_per_string = hand_positions = 1
+    max_slide = 0
+    if kind == "strings":
+        _check_strings(notes, fretboard.string_count, "pattern.strings")
+    else:
+        if set(notes) != set(range(max(notes) + 1)):
+            raise ConfigError("pattern.contour: must use every stop from 0 up to its highest")
+        notes_per_string = _as_int(t["notes_per_string"], "pattern.notes_per_string")
+        hand_positions = _as_int(t["hand_positions"], "pattern.hand_positions")
+        max_slide = _as_int(t["max_slide"], "pattern.max_slide")
+        if notes_per_string < 1 or hand_positions < 1:
+            raise ConfigError("pattern: notes_per_string and hand_positions must be at least 1")
+        if max_slide < 1:
+            raise ConfigError("pattern.max_slide: must be at least 1")
+        if max(notes) + 1 > notes_per_string * fretboard.string_count:
+            raise ConfigError(
+                f"pattern.contour: {max(notes) + 1} stops don't fit on {fretboard.string_count} strings "
+                f"with {notes_per_string} per string"
+            )
     note = _as_str(t["note"], "pattern.note")
     if note not in NOTE_VALUES:
         raise ConfigError(f"pattern.note: expected one of {', '.join(NOTE_VALUES)}")
     note_quarters = NOTE_VALUES[note]
-    if len(strings) * note_quarters != meter.bar_quarters:
+    if len(notes) * note_quarters != meter.bar_quarters:
         raise ConfigError(
-            f"pattern: {len(strings)} {note} notes don't fill a bar of "
+            f"pattern: {len(notes)} {note} notes don't fill a bar of "
             f"{meter.beats}/{meter.beat_unit}"
         )
     velocities = tuple(
         _as_int(v, "pattern.velocities") for v in _as_list(t["velocities"], "pattern.velocities")
     )
-    if len(velocities) != len(strings):
-        raise ConfigError(f"pattern.velocities: need one per note ({len(strings)}), got {len(velocities)}")
+    if len(velocities) != len(notes):
+        raise ConfigError(f"pattern.velocities: need one per note ({len(notes)}), got {len(velocities)}")
     if not all(1 <= v <= 127 for v in velocities):
         raise ConfigError("pattern.velocities: each must be between 1 and 127")
-    return Pattern(strings, note, note_quarters, velocities)
+    strings, contour = (notes, ()) if kind == "strings" else ((), notes)
+    return Pattern(
+        strings, contour, note, note_quarters, velocities, notes_per_string, hand_positions, max_slide
+    )
 
 
 def _parse_centers(value: Any) -> Centers:
@@ -344,7 +405,18 @@ def _parse_centers(value: Any) -> Centers:
 
 def _parse_palette(value: Any) -> Palette:
     t = _as_table(value, "palette")
-    _check_keys(t, required=set(MODES), where="palette")
+    _check_keys(t, required={"tonic", "optional_intervals", *MODES}, where="palette")
+    tonic = _as_str(t["tonic"], "palette.tonic")
+    try:
+        pitch_class(tonic)
+    except ValueError as e:
+        raise ConfigError(f"palette.tonic: {e}") from e
+    optional = frozenset(
+        _as_int(i, "palette.optional_intervals")
+        for i in _as_list(t["optional_intervals"], "palette.optional_intervals")
+    )
+    if not all(1 <= i <= 11 for i in optional):
+        raise ConfigError("palette.optional_intervals: each must be 1 to 11 semitones above the root")
     lists = {}
     for mode in MODES:
         chords = tuple(_as_str(c, f"palette.{mode}") for c in _as_list(t[mode], f"palette.{mode}"))
@@ -354,7 +426,7 @@ def _parse_palette(value: Any) -> Palette:
         if duplicates:
             raise ConfigError(f"palette.{mode}: repeated chords {', '.join(duplicates)}")
         lists[mode] = chords
-    return Palette(lists["minor"], lists["major"])
+    return Palette(tonic, optional, lists["minor"], lists["major"])
 
 
 def _parse_graph(value: Any, palette: Palette) -> Graph:

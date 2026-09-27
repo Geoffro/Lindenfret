@@ -20,7 +20,7 @@ _CENTER_RE = re.compile(r"^([A-G][#b]?)(m?)$")
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="lindenfret", description="Generate Etude 1 variants.")
+    parser = argparse.ArgumentParser(prog="lindenfret", description="Generate playable guitar études from an L-system.")
     commands = parser.add_subparsers(dest="command", required=True)
 
     gen = commands.add_parser("generate", help="write one piece: MIDI, MusicXML and a manifest")
@@ -93,12 +93,13 @@ def _regenerate(manifest_path: Path, out: Path | None) -> None:
 
 def _inspect(args: argparse.Namespace) -> None:
     config = load_config(args.config)
-    voicer = Voicer(config.fretboard, config.pattern.strings, config.voicer)
+    voicer = Voicer(config.fretboard, config.pattern, config.voicer)
     if args.chord:
         region = (0, config.fretboard.max_fret)
         if args.region:
             region = parse_region(args.region, config.fretboard.max_fret, "--region")
-        print(fingering_report(voicer, parse_chord(args.chord), region, args.top))
+        spec = parse_chord(args.chord, config.palette.optional_intervals)
+        print(fingering_report(voicer, spec, region, args.top))
     elif args.center:
         mode, tonic = _parse_center(args.center)
         print(center_report(voicer, build_chord_table(config.palette), mode, tonic))

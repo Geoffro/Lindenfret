@@ -1,5 +1,3 @@
-import importlib.util
-import sys
 from pathlib import Path
 
 import pytest
@@ -13,7 +11,7 @@ from lindenfret.render import render_bar, render_piece
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = load_config(ROOT / "configs" / "etude1.toml")
 TABLE = build_chord_table(CONFIG.palette)
-VOICER = Voicer(CONFIG.fretboard, CONFIG.pattern.strings, CONFIG.voicer)
+VOICER = Voicer(CONFIG.fretboard, CONFIG.pattern, CONFIG.voicer)
 BAR = CONFIG.meter.bar_quarters
 
 
@@ -63,20 +61,17 @@ def test_ritardando_over_each_sections_last_bar_pair(rendering):
             assert (m.start, tempo) in rendering.tempos
 
 
-def load_tool():
-    spec = importlib.util.spec_from_file_location("analyze_reference", ROOT / "tools" / "analyze_reference.py")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-def test_the_references_fingerings_render_to_the_reference():
-    tool = load_tool()
-    facts = tool.analyze(
-        tool.DEFAULT_MIDI, CONFIG.pattern.strings, CONFIG.pattern.note_quarters, CONFIG.fretboard.open_midi
-    )
+def test_the_references_fingerings_render_to_the_reference(etude1_facts):
+    facts, _ = etude1_facts
     for bar in range(1, 45):
         fingering = Fingering.from_frets(facts.frets[bar], CONFIG.fretboard)
         notes = render_bar(fingering, None, CONFIG.pattern, 0.0, BAR)
+        assert [frozenset({n.midi}) for n in notes] == facts.bar_pitches[bar], bar
+
+
+def test_etude2_ladders_render_to_the_reference(reference_tool, etude2_facts):
+    facts, config = etude2_facts
+    for bar in facts.matching_bars[::2]:
+        ladder = reference_tool.ladder_fingerings(facts.ladders[bar], config.fretboard, config.pattern)[0]
+        notes = render_bar(ladder, None, config.pattern, 0.0, BAR)
         assert [frozenset({n.midi}) for n in notes] == facts.bar_pitches[bar], bar

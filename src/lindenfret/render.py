@@ -2,7 +2,9 @@
 
 Every generated bar is played `repeat_bars` times. In each measure the
 right-hand pattern plucks one string per note; a note sounds until its
-string is plucked again or the measure ends, as a held guitar note would.
+string is plucked again or the measure ends, as a held guitar note would. A
+fretted note in a contour pattern also stops when the hand moves to another
+position.
 """
 
 from __future__ import annotations
@@ -11,8 +13,9 @@ from dataclasses import dataclass
 
 from lindenfret.chords import ChordSpec
 from lindenfret.config import Config, Pattern
-from lindenfret.fretboard import Fingering
+from lindenfret.fretboard import Fingering, Voicing
 from lindenfret.harmony import Bar
+from lindenfret.ladder import Ladder
 from lindenfret.pipeline import Piece
 
 
@@ -49,9 +52,17 @@ class Rendering:
 
 
 def render_bar(
-    fingering: Fingering, spec: ChordSpec | None, pattern: Pattern, start: float, bar_quarters: float
+    fingering: Voicing, spec: ChordSpec | None, pattern: Pattern, start: float, bar_quarters: float
 ) -> list[NoteEvent]:
     """One measure of the pattern over `fingering`, starting at `start`."""
+    if pattern.contour:
+        return _render_contour(fingering, spec, pattern, start, bar_quarters)
+    return _render_strings(fingering, spec, pattern, start, bar_quarters)
+
+
+def _render_strings(
+    fingering: Fingering, spec: ChordSpec | None, pattern: Pattern, start: float, bar_quarters: float
+) -> list[NoteEvent]:
     count = len(fingering.frets)
     step = pattern.note_quarters
     notes = []
@@ -61,6 +72,27 @@ def render_bar(
             continue
         later = [j for j in range(k + 1, len(pattern.strings)) if pattern.strings[j] == string]
         end = later[0] * step if later else bar_quarters
+        name = spec.spell(midi) if spec else _plain_name(midi)
+        notes.append(NoteEvent(start + k * step, end - k * step, string, fret, midi, velocity, name))
+    return notes
+
+
+def _render_contour(
+    ladder: Ladder, spec: ChordSpec | None, pattern: Pattern, start: float, bar_quarters: float
+) -> list[NoteEvent]:
+    step = pattern.note_quarters
+    notes = []
+    for k, (index, velocity) in enumerate(zip(pattern.contour, pattern.velocities)):
+        string, fret = ladder.stops[index]
+        end = bar_quarters
+        for j in range(k + 1, len(pattern.contour)):
+            later = pattern.contour[j]
+            later_string, later_fret = ladder.stops[later]
+            moved = fret > 0 and later_fret > 0 and ladder.hands[later] != ladder.hands[index]
+            if later_string == string or moved:
+                end = j * step
+                break
+        midi = ladder.pitches[index]
         name = spec.spell(midi) if spec else _plain_name(midi)
         notes.append(NoteEvent(start + k * step, end - k * step, string, fret, midi, velocity, name))
     return notes

@@ -42,7 +42,7 @@ def plan_piece(
     config: Config, seed: int, table: ChordTable | None = None, voicer: Voicer | None = None
 ) -> Piece:
     table = table or build_chord_table(config.palette)
-    voicer = voicer or Voicer(config.fretboard, config.pattern.strings, config.voicer)
+    voicer = voicer or Voicer(config.fretboard, config.pattern, config.voicer)
     graph = ChordGraph(table, config.graph, config.palette)
     form = derive_form(config, seed)
     sections = tuple(

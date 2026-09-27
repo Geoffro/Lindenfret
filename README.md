@@ -1,8 +1,8 @@
 # Lindenfret
 
-Generates new, playable guitar pieces in the style of Villa-Lobos's Etude 1.
+Generates new, playable guitar pieces in the style of Villa-Lobos's Etudes 1 and 2.
 
-Each piece keeps the etude's right-hand arpeggio and rhythm. An L-system generates everything else: the form, the harmony, key changes, sliding chord shapes and the ending. A fretboard model checks that every bar can be played. Nothing is copied from the original. A seed and a config file fully determine a piece, so any piece can be rebuilt exactly.
+Each piece keeps its étude's right-hand arpeggio and rhythm. An L-system generates everything else: the form, the harmony, key changes, sliding chord shapes and the ending. A fretboard model checks that every bar can be played. Nothing is copied from the original. A seed and a config file fully determine a piece, so any piece can be rebuilt exactly.
 
 For how it works, see [docs/design.md](docs/design.md). For build status, see [docs/plan.md](docs/plan.md).
 
@@ -29,7 +29,7 @@ This creates `out/etude1-7/` containing:
 - `piece.musicxml`: standard notation, which opens in MuseScore.
 - `manifest.json`: the seed, config and plan used to rebuild the piece.
 
-Leave out `--seed` to pick one at random.
+Leave out `--seed` to pick one at random. For Etude 2, use `--config configs/etude2.toml`; its pieces go to `out/etude2-<seed>/`.
 
 Write a batch of pieces to listen through:
 
@@ -73,7 +73,7 @@ It also answers questions about the fretboard:
 
 ## Experimenting
 
-Everything musical is set in [configs/etude1.toml](configs/etude1.toml): the grammar rules, section lengths and fret regions, the chord palette, key-change weights, voicing preferences and playability limits. To try a variation, copy the preset under a new name, or change it on a branch. The config is checked when it loads, so a mistake fails with a message naming the key.
+Everything musical is set in the presets, [configs/etude1.toml](configs/etude1.toml) and [configs/etude2.toml](configs/etude2.toml): the right-hand pattern, the grammar rules, section lengths and fret regions, the chord palette and its key, key-change weights, voicing preferences and playability limits. Etude 1's pattern names a string for each note; Etude 2's is a contour that climbs a ladder of stops, several to a string. To try a variation, copy the preset under a new name, or change it on a branch. The config is checked when it loads, so a mistake fails with a message naming the key.
 
 Record the pieces worth practicing in [curated.toml](curated.toml), with each piece's seed and config hash.
 
@@ -85,4 +85,4 @@ Record the pieces worth practicing in [curated.toml](curated.toml), with each pi
 
 If a change to the code or the preset changes the generated music on purpose, the golden snapshots in `tests/golden/` will fail. Delete them and run the tests again to write new ones.
 
-`tools/analyze_reference.py` re-derives the facts about the original etude that the design relies on, from the MIDI in `reference/`.
+`tools/analyze_reference.py` re-derives the facts about the original études that the design relies on, from the MIDIs in `reference/`. It analyzes Etude 1 by default; for Etude 2, run it with `--midi reference/Villa-Lobos_Etude_No2.mid --config configs/etude2.toml`.

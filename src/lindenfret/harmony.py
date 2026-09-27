@@ -13,9 +13,9 @@ import random
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 
-from lindenfret.chords import PALETTE_TONIC, ChordSpec, ChordTable
+from lindenfret.chords import ChordSpec, ChordTable
 from lindenfret.config import CENTER_MOVES, MODES, Config, Graph, Palette, pitch_class
-from lindenfret.fretboard import Fingering, Region, Voicer
+from lindenfret.fretboard import Region, Voicer, Voicing
 from lindenfret.interpret import SectionPlan
 
 
@@ -58,7 +58,7 @@ class Bar:
     offset: int  # frets the region, or the planing shape, has moved within the section
     events: tuple[str, ...]  # what changed since the previous bar
     note: str = ""  # why the walk departed from its rule, if it had to
-    fingering: Fingering | None = None
+    fingering: Voicing | None = None
     shape: str = ""  # a planing bar's shape kind: "dim7", "augmented" or "any"
 
 
@@ -72,7 +72,7 @@ class ChordGraph:
         self.table = table
         self.bass_step = graph.bass_step
         self.reference_bonus = graph.reference_bonus
-        home = pitch_class(PALETTE_TONIC)
+        home = pitch_class(palette.tonic)
         self.tonics: dict[str, tuple[int, ...]] = {}
         self.dominants: dict[str, tuple[int, ...]] = {}
         self.reference_edges: dict[str, set[tuple[int, int]]] = {}
@@ -90,9 +90,9 @@ class ChordGraph:
                 i for i, s in enumerate(specs) if s.root == fifth and (fifth + 4) % 12 in s.pitch_classes
             )
             if not self.tonics[mode]:
-                raise HarmonyError(f"palette.{mode}: no tonic chord (a {mode} chord rooted on E)")
+                raise HarmonyError(f"palette.{mode}: no tonic chord (a {mode} chord rooted on {palette.tonic})")
             if not self.dominants[mode]:
-                raise HarmonyError(f"palette.{mode}: no dominant chord (a chord on B with a major third)")
+                raise HarmonyError(f"palette.{mode}: no dominant chord (a chord on the fifth with a major third)")
             figures = getattr(palette, mode)
             self.reference_edges[mode] = {
                 (figures.index(a), figures.index(b))
@@ -290,7 +290,7 @@ class Harmonizer:
     # --- playability ------------------------------------------------------
 
     def _playable(self, center: Center, index: int, region: Region) -> bool:
-        return bool(self.voicer.fingerings(self.graph.chords(center)[index], region))
+        return self.voicer.playable(self.graph.chords(center)[index], region)
 
     def _tonic_playable(self, center: Center, region: Region) -> bool:
         return any(self._playable(center, i, region) for i in self.graph.tonics[center.mode])
