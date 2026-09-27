@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.chords import ChordError, build_chord_table, parse_chord
-from etudegen.config import MODES, load_config
+from lindenfret.chords import ChordError, build_chord_table, parse_chord
+from lindenfret.config import MODES, load_config
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 E, F_SHARP, G, A, B, C, C_SHARP, D_SHARP = 4, 6, 7, 9, 11, 0, 1, 3

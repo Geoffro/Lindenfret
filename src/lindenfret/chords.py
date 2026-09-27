@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from music21 import harmony, interval, key, pitch
 
-from etudegen.config import MODES, ConfigError, Palette
+from lindenfret.config import MODES, ConfigError, Palette
 
 PALETTE_TONIC = "E"  # palette chords are written relative to E
 PERFECT_FIFTH = 7  # the one chord tone a voicing may leave out

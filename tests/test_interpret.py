@@ -2,9 +2,9 @@ import random
 
 import pytest
 
-from etudegen.config import Section
-from etudegen.interpret import LengthError, plan_section
-from etudegen.lsystem import Production
+from lindenfret.config import Section
+from lindenfret.interpret import LengthError, plan_section
+from lindenfret.lsystem import Production
 
 
 def section(rules, length, axiom="F"):

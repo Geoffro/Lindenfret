@@ -1,4 +1,4 @@
-from etudegen.rng import stage_rng, stage_seed
+from lindenfret.rng import stage_rng, stage_seed
 
 
 def test_stage_seed_is_stable_across_processes():

@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from etudegen.chords import ChordTable, build_chord_table
-from etudegen.config import Config, ConfigError
-from etudegen.fretboard import Voicer
-from etudegen.harmony import Bar, Center, ChordGraph, Harmonizer
-from etudegen.interpret import SectionPlan, plan_section
-from etudegen.lsystem import derive
-from etudegen.planing import plane
-from etudegen.rng import stage_rng
+from lindenfret.chords import ChordTable, build_chord_table
+from lindenfret.config import Config, ConfigError
+from lindenfret.fretboard import Voicer
+from lindenfret.harmony import Bar, Center, ChordGraph, Harmonizer
+from lindenfret.interpret import SectionPlan, plan_section
+from lindenfret.lsystem import derive
+from lindenfret.planing import plane
+from lindenfret.rng import stage_rng
 
 
 @dataclass(frozen=True)

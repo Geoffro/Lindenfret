@@ -1,8 +1,8 @@
-# Villa-Lobos Etude 1 Variant Generator: Design
+# Lindenfret: Design
 
 ## Summary
 
-`etudegen` is a Python package that turns a seed and a config file into a playable variant of Villa-Lobos's Etude 1. Each variant keeps the original's right-hand pattern and rhythm. Everything else is generated from the seed, and nothing is copied from the original. An L-system generates the form, harmony, modulations, planing shapes and ending, and a fretboard voicer makes sure every bar can be played. Each run writes MIDI and MusicXML notation, plus a manifest that regenerates the piece exactly.
+Lindenfret is a Python package that turns a seed and a config file into a playable variant of Villa-Lobos's Etude 1. Each variant keeps the original's right-hand pattern and rhythm. Everything else is generated from the seed, and nothing is copied from the original. An L-system generates the form, harmony, modulations, planing shapes and ending, and a fretboard voicer makes sure every bar can be played. Each run writes MIDI and MusicXML notation, plus a manifest that regenerates the piece exactly.
 
 The musical model comes from an analysis of a MIDI of the original, summarized under [The reference](#the-reference-etude-1). The build plan is in [plan.md](plan.md).
 
@@ -20,7 +20,7 @@ The musical model comes from an analysis of a MIDI of the original, summarized u
   - `piece.mid`, with let-ring note lengths and one MIDI channel per string.
   - `piece.musicxml`, standard notation that opens in MuseScore.
   - `manifest.json`, the record used to regenerate the piece.
-- **Reproducibility**: the same seed, config and code version always give byte-identical MIDI and manifest. The MusicXML differs only in its encoding date.
+- **Reproducibility**: the same seed, config and code version always give byte-identical MIDI and manifest. The MusicXML has the same notes, but its encoding date and the part IDs music21 generates change on every run.
 
 ## The reference: Etude 1
 
@@ -279,18 +279,19 @@ After filtering by pitch class, each string has a handful of options, so a chord
 Commands:
 
 ```
-etudegen generate   --config configs/etude1.toml [--seed N] [--out out/]
-etudegen batch      --config configs/etude1.toml --count 20 [--first-seed N] [--out out/]
-etudegen inspect    --config configs/etude1.toml [--seed N]      # derivation, centers, chord plan, fingerings
-etudegen inspect    --config configs/etude1.toml --chord Em7 [--region 0-4] [--top 10]
-etudegen inspect    --config configs/etude1.toml --center Gm    # where each palette chord is playable
-etudegen regenerate out/etude1-<seed>/manifest.json [--out DIR]
+lindenfret generate   --config configs/etude1.toml [--seed N] [--out out/]
+lindenfret batch      --config configs/etude1.toml --count 20 [--first-seed N] [--out out/]
+lindenfret inspect    --config configs/etude1.toml [--seed N]      # derivation, centers, chord plan, fingerings
+lindenfret inspect    --config configs/etude1.toml --chord Em7 [--region 0-4] [--top 10]
+lindenfret inspect    --config configs/etude1.toml --center Gm    # where each palette chord is playable
+lindenfret regenerate out/etude1-<seed>/manifest.json [--out DIR]
 ```
 
 ### Repository layout
 
 ```
 LSystemsGenerator/
+  README.md
   pyproject.toml
   configs/etude1.toml
   curated.toml                   keepers from listening passes
@@ -298,7 +299,7 @@ LSystemsGenerator/
     Villa-Lobos_Etude_No1b.mid   MIDI of the original
   tools/
     analyze_reference.py         re-derives the reference facts in this doc
-  src/etudegen/
+  src/lindenfret/
     cli.py          generate / batch / inspect / regenerate
     config.py       dataclasses, TOML loading, validation
     chords.py       ChordSpec; palette chord symbols parsed and transposed with music21

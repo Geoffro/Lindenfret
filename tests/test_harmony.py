@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.chords import build_chord_table
-from etudegen.config import load_config
-from etudegen.fretboard import Voicer
-from etudegen.harmony import MOVES, Center, ChordGraph, Harmonizer
-from etudegen.interpret import SectionPlan
+from lindenfret.chords import build_chord_table
+from lindenfret.config import load_config
+from lindenfret.fretboard import Voicer
+from lindenfret.harmony import MOVES, Center, ChordGraph, Harmonizer
+from lindenfret.interpret import SectionPlan
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONFIG = load_config(PRESET)

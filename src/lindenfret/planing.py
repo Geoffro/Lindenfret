@@ -16,9 +16,9 @@ from dataclasses import dataclass, replace
 from functools import cache
 from itertools import combinations, product
 
-from etudegen.config import Config, ConfigError, Fretboard, Section
-from etudegen.fretboard import Fingering, check_fingering, fingers_needed
-from etudegen.harmony import Bar
+from lindenfret.config import Config, ConfigError, Fretboard, Section
+from lindenfret.fretboard import Fingering, check_fingering, fingers_needed
+from lindenfret.harmony import Bar
 
 DIM7 = frozenset({0, 3, 6, 9})
 AUGMENTED = frozenset({0, 4, 8})

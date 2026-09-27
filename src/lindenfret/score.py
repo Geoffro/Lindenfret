@@ -12,8 +12,8 @@ from itertools import product
 
 from music21 import clef, expressions, instrument, metadata, meter, note, pitch, stream, tempo
 
-from etudegen.config import Config
-from etudegen.render import Rendering
+from lindenfret.config import Config
+from lindenfret.render import Rendering
 
 HOLD_DIRECTION = "hold every note to the end of the bar"
 

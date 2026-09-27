@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from etudegen.alphabet import BAR_LENGTHS, BAR_SYMBOLS
-from etudegen.lsystem import Production
+from lindenfret.alphabet import BAR_LENGTHS, BAR_SYMBOLS
+from lindenfret.lsystem import Production
 
 HarmonyMode = Literal["graph", "planing"]
 

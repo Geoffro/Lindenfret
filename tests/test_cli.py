@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from etudegen.cli import main
+from lindenfret.cli import main
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 
@@ -66,7 +66,7 @@ def test_bad_config_exits_with_an_error(capsys, tmp_path):
     bad.write_text("[meter]\n")
     code, _, err = run(capsys, "inspect", "--config", str(bad), "--seed", "1")
     assert code == 2
-    assert "etudegen:" in err
+    assert "lindenfret:" in err
 
 
 def test_regenerate_rejects_a_file_that_isnt_a_manifest(capsys, tmp_path):

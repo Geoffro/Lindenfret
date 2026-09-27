@@ -3,10 +3,10 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "etudegen"
+name = "lindenfret"
 version = "0.1.0"
 description = "L-system generator for playable variants of Villa-Lobos's Etude 1"
-readme = "docs/design.md"
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["music21>=10", "mido>=1.3"]
 
@@ -14,7 +14,7 @@ dependencies = ["music21>=10", "mido>=1.3"]
 dev = ["pytest", "hypothesis"]
 
 [project.scripts]
-etudegen = "etudegen.cli:main"
+lindenfret = "lindenfret.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

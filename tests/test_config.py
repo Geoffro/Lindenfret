@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.config import ConfigError, load_config, note_to_midi, parse_config, pitch_class
+from lindenfret.config import ConfigError, load_config, note_to_midi, parse_config, pitch_class
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 

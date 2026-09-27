@@ -11,9 +11,9 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from etudegen.alphabet import bar_count
-from etudegen.config import ConfigError, Section
-from etudegen.lsystem import iter_words
+from lindenfret.alphabet import bar_count
+from lindenfret.config import ConfigError, Section
+from lindenfret.lsystem import iter_words
 
 MAX_ITERATIONS = 12  # a grammar still short of its range after this many never grows enough
 MAX_ATTEMPTS = 50

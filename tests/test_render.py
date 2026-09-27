@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.chords import build_chord_table
-from etudegen.config import load_config
-from etudegen.fretboard import Fingering, Voicer
-from etudegen.pipeline import plan_piece
-from etudegen.render import render_bar, render_piece
+from lindenfret.chords import build_chord_table
+from lindenfret.config import load_config
+from lindenfret.fretboard import Fingering, Voicer
+from lindenfret.pipeline import plan_piece
+from lindenfret.render import render_bar, render_piece
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = load_config(ROOT / "configs" / "etude1.toml")

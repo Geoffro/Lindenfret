@@ -1,4 +1,4 @@
-# Villa-Lobos Etude 1 Variant Generator: Implementation Plan
+# Lindenfret: Implementation Plan
 
 Design: [design.md](design.md)
 
@@ -21,7 +21,7 @@ Five phases, built in order. Each ends in a gate you can check from the command 
 - [x] Add `pyproject.toml`: `requires-python = ">=3.11"` (for `tomllib`), depends on music21 and mido, dev extras pytest and hypothesis.
 - [x] Write `tools/analyze_reference.py`. It prints the reference facts in the design, reading the pattern and tuning from the config: the pattern check, bar repeats, frets and chord per bar, left-hand limits and tempo changes. `tests/test_reference.py` checks the same facts.
 - [x] Write `configs/etude1.toml`: pattern, meter, tempo, bar repeat, center weights and moves, minor and major palettes written in E, chord graph weights, planing shape weights, `max_span = 5`, `max_fret = 13`.
-- [x] Add the package skeleton: config dataclasses with a TOML loader that validates every key, the per-stage RNG helper, weighted stochastic L-system rewriting, and `etudegen inspect`, which prints each section's derivation per iteration with its bar count.
+- [x] Add the package skeleton: config dataclasses with a TOML loader that validates every key, the per-stage RNG helper, weighted stochastic L-system rewriting, and `lindenfret inspect`, which prints each section's derivation per iteration with its bar count.
 
 ## Phase 1: Fretboard and voicer
 
@@ -38,7 +38,7 @@ Five phases, built in order. Each ends in a gate you can check from the command 
 - [x] The walk (`harmony.py`): each section's symbol string becomes bars, with brackets saving and restoring chord, center and fret region, and `+`/`-` stopping at the ends of the neck.
 - [x] `Center` model and center graph: start weights, `M` moves (thirds are major thirds), one move at each graph section's start, and only centers playable in the current region.
 - [x] Weighted chord graph per mode that favors stepwise bass motion and offers only chords playable in the current region. Tonic and dominant chords come from the palette, and `K` plays dominant then tonic, falling back to a step with a note when neither fits.
-- [x] `pipeline.py` plans a whole piece and voices every graph bar; `etudegen inspect --seed N` prints every bar's center, chord, fingering, region, role and events.
+- [x] `pipeline.py` plans a whole piece and voices every graph bar; `lindenfret inspect --seed N` prints every bar's center, chord, fingering, region, role and events.
 
 ## Phase 3: Rendering and export
 
@@ -53,5 +53,5 @@ Five phases, built in order. Each ends in a gate you can check from the command 
 - [x] Planing mode (`planing.py`): a shape generated per sequence (four fretted strings, two open, kind drawn by weight, comfortable span, whole slide in the region), checked against the hard rules at every fret it reaches, and moved by `+` and `-`.
 - [x] Planing bars spelled in the notation without letter clashes, in stacked thirds where possible.
 - [x] Etude 1 preset: graph-mode sections open and close the piece, with planing sequences between them.
-- [x] Batch of 20 generated: `etudegen batch --config configs/etude1.toml --count 20 --first-seed 1` wrote `out/etude1-1` to `out/etude1-20`.
+- [x] Batch of 20 generated: `lindenfret batch --config configs/etude1.toml --count 20 --first-seed 1` wrote `out/etude1-1` to `out/etude1-20`.
 - [ ] Listen, and record the keepers with their config hash in `curated.toml`.

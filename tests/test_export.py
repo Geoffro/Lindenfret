@@ -5,12 +5,12 @@ import mido
 import pytest
 from music21 import clef, converter, expressions, key
 
-from etudegen.cli import main
-from etudegen.config import parse_config_text
-from etudegen.export import GUITAR_PROGRAM, generate
-from etudegen.fretboard import Fingering
-from etudegen.render import render_bar
-from etudegen.score import HOLD_DIRECTION, _respell_as_chord
+from lindenfret.cli import main
+from lindenfret.config import parse_config_text
+from lindenfret.export import GUITAR_PROGRAM, generate
+from lindenfret.fretboard import Fingering
+from lindenfret.render import render_bar
+from lindenfret.score import HOLD_DIRECTION, _respell_as_chord
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 TEXT = PRESET.read_text(encoding="utf-8")

@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from etudegen.chords import ChordSpec
-from etudegen.config import Config, Pattern
-from etudegen.fretboard import Fingering
-from etudegen.harmony import Bar
-from etudegen.pipeline import Piece
+from lindenfret.chords import ChordSpec
+from lindenfret.config import Config, Pattern
+from lindenfret.fretboard import Fingering
+from lindenfret.harmony import Bar
+from lindenfret.pipeline import Piece
 
 
 @dataclass(frozen=True)

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.config import load_config
+from lindenfret.config import load_config
 
 ROOT = Path(__file__).resolve().parent.parent
 

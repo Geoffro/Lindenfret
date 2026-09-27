@@ -6,9 +6,9 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from etudegen.chords import build_chord_table, parse_chord
-from etudegen.config import MODES, load_config
-from etudegen.fretboard import (
+from lindenfret.chords import build_chord_table, parse_chord
+from lindenfret.config import MODES, load_config
+from lindenfret.fretboard import (
     Fingering,
     NoFingering,
     Voicer,
@@ -17,7 +17,7 @@ from etudegen.fretboard import (
     fingers_needed,
     hand_positions,
 )
-from etudegen.report import unplayable_chords
+from lindenfret.report import unplayable_chords
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONFIG = load_config(PRESET)

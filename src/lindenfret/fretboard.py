@@ -17,8 +17,8 @@ from collections import Counter
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
-from etudegen.chords import ChordSpec
-from etudegen.config import Fretboard, VoicerSettings
+from lindenfret.chords import ChordSpec
+from lindenfret.config import Fretboard, VoicerSettings
 
 Region = tuple[int, int]  # lowest and highest fret a fretted note may use
 

@@ -1,12 +1,12 @@
-"""Plain-text reports for `etudegen inspect`."""
+"""Plain-text reports for `lindenfret inspect`."""
 
 from __future__ import annotations
 
-from etudegen.alphabet import bar_count
-from etudegen.chords import ChordSpec, ChordTable
-from etudegen.fretboard import Region, Voicer, fingers_needed, hand_positions
-from etudegen.harmony import Bar
-from etudegen.pipeline import Piece
+from lindenfret.alphabet import bar_count
+from lindenfret.chords import ChordSpec, ChordTable
+from lindenfret.fretboard import Region, Voicer, fingers_needed, hand_positions
+from lindenfret.harmony import Bar
+from lindenfret.pipeline import Piece
 
 WORD_WIDTH = 72
 

@@ -16,7 +16,7 @@ from pathlib import Path
 import mido
 from music21 import chord, pitch
 
-from etudegen.config import load_config
+from lindenfret.config import load_config
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MIDI = ROOT / "reference" / "Villa-Lobos_Etude_No1b.mid"

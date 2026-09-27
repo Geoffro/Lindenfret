@@ -8,19 +8,19 @@ import secrets
 import sys
 from pathlib import Path
 
-from etudegen.chords import build_chord_table, parse_chord
-from etudegen.config import ConfigError, load_config, parse_config_text, parse_region, pitch_class
-from etudegen.export import MIDI_FILE, generate, read_manifest
-from etudegen.fretboard import Voicer
-from etudegen.harmony import HarmonyError
-from etudegen.pipeline import plan_piece
-from etudegen.report import center_report, fingering_report, piece_report
+from lindenfret.chords import build_chord_table, parse_chord
+from lindenfret.config import ConfigError, load_config, parse_config_text, parse_region, pitch_class
+from lindenfret.export import MIDI_FILE, generate, read_manifest
+from lindenfret.fretboard import Voicer
+from lindenfret.harmony import HarmonyError
+from lindenfret.pipeline import plan_piece
+from lindenfret.report import center_report, fingering_report, piece_report
 
 _CENTER_RE = re.compile(r"^([A-G][#b]?)(m?)$")
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="etudegen", description="Generate Etude 1 variants.")
+    parser = argparse.ArgumentParser(prog="lindenfret", description="Generate Etude 1 variants.")
     commands = parser.add_subparsers(dest="command", required=True)
 
     gen = commands.add_parser("generate", help="write one piece: MIDI, MusicXML and a manifest")
@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             _inspect(args)
     except (ConfigError, HarmonyError, OSError) as e:
-        print(f"etudegen: {e}", file=sys.stderr)
+        print(f"lindenfret: {e}", file=sys.stderr)
         return 2
     return 0
 

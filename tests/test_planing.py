@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.config import load_config
-from etudegen.fretboard import check_fingering
-from etudegen.harmony import Bar
-from etudegen.planing import all_shapes, plane, shape_kinds
+from lindenfret.config import load_config
+from lindenfret.fretboard import check_fingering
+from lindenfret.harmony import Bar
+from lindenfret.planing import all_shapes, plane, shape_kinds
 
 CONFIG = load_config(Path(__file__).resolve().parent.parent / "configs" / "etude1.toml")
 FRETBOARD = CONFIG.fretboard

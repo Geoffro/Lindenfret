@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.config import parse_config_text
-from etudegen.export import manifest
-from etudegen.pipeline import plan_piece
+from lindenfret.config import parse_config_text
+from lindenfret.export import manifest
+from lindenfret.pipeline import plan_piece
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESET = ROOT / "configs" / "etude1.toml"

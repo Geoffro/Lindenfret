@@ -13,10 +13,10 @@ import random
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 
-from etudegen.chords import PALETTE_TONIC, ChordSpec, ChordTable
-from etudegen.config import CENTER_MOVES, MODES, Config, Graph, Palette, pitch_class
-from etudegen.fretboard import Fingering, Region, Voicer
-from etudegen.interpret import SectionPlan
+from lindenfret.chords import PALETTE_TONIC, ChordSpec, ChordTable
+from lindenfret.config import CENTER_MOVES, MODES, Config, Graph, Palette, pitch_class
+from lindenfret.fretboard import Fingering, Region, Voicer
+from lindenfret.interpret import SectionPlan
 
 
 @dataclass(frozen=True)

@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from etudegen.chords import build_chord_table
-from etudegen.config import ConfigError, load_config
-from etudegen.fretboard import Voicer, check_fingering
-from etudegen.lsystem import Production
-from etudegen.pipeline import plan_piece
+from lindenfret.chords import build_chord_table
+from lindenfret.config import ConfigError, load_config
+from lindenfret.fretboard import Voicer, check_fingering
+from lindenfret.lsystem import Production
+from lindenfret.pipeline import plan_piece
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONFIG = load_config(PRESET)

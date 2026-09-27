@@ -3,8 +3,8 @@ import random
 from hypothesis import given
 from hypothesis import strategies as st
 
-from etudegen.lsystem import Production, derive, iter_words, rewrite
-from etudegen.rng import stage_rng
+from lindenfret.lsystem import Production, derive, iter_words, rewrite
+from lindenfret.rng import stage_rng
 
 
 def single(to):

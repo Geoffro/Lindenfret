@@ -15,11 +15,11 @@ from pathlib import Path
 
 import mido
 
-from etudegen import __version__
-from etudegen.config import Config
-from etudegen.pipeline import Piece, plan_piece
-from etudegen.render import Rendering, render_piece
-from etudegen.score import build_score
+from lindenfret import __version__
+from lindenfret.config import Config
+from lindenfret.pipeline import Piece, plan_piece
+from lindenfret.render import Rendering, render_piece
+from lindenfret.score import build_score
 
 TICKS_PER_QUARTER = 480
 GUITAR_PROGRAM = 24  # General MIDI "Acoustic Guitar (nylon)", numbered from 0
@@ -81,7 +81,7 @@ def write_midi(rendering: Rendering, config: Config, path: Path) -> None:
 
 def manifest(piece: Piece, config_text: str, name: str) -> dict:
     return {
-        "generator": f"etudegen {__version__}",
+        "generator": f"lindenfret {__version__}",
         "git_commit": _git_commit(),
         "preset": name,
         "seed": piece.seed,

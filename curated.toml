@@ -2,7 +2,7 @@
 #
 # A keeper is a seed plus the exact preset text that made it. config_sha256
 # comes from the piece's manifest.json; if configs/etude1.toml has changed
-# since, `etudegen regenerate out/<preset>-<seed>/manifest.json` still rebuilds
+# since, `lindenfret regenerate out/<preset>-<seed>/manifest.json` still rebuilds
 # the piece from the config text stored in the manifest.
 #
 # Pieces in the first batch (seeds 1-20) were made with this preset text:
