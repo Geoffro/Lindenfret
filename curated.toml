@@ -1,0 +1,17 @@
+# Keepers from listening passes: generated pieces worth practicing.
+#
+# A keeper is a seed plus the exact preset text that made it. config_sha256
+# comes from the piece's manifest.json; if configs/etude1.toml has changed
+# since, `etudegen regenerate out/<preset>-<seed>/manifest.json` still rebuilds
+# the piece from the config text stored in the manifest.
+#
+# Pieces in the first batch (seeds 1-20) were made with this preset text:
+#   ae55a96d0feb2fc95f2f2e949e728eb5679b930860f66eaedcbbda3ae44650bf
+#
+# Add one [[keep]] table per keeper:
+#
+# [[keep]]
+# seed = 7
+# preset = "etude1"
+# config_sha256 = "ae55a96d0feb2fc95f2f2e949e728eb5679b930860f66eaedcbbda3ae44650bf"
+# notes = "what makes it worth practicing"

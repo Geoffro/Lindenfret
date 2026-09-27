@@ -1,0 +1,830 @@
+{
+  "preset": "etude1",
+  "seed": 8,
+  "config_sha256": "ae55a96d0feb2fc95f2f2e949e728eb5679b930860f66eaedcbbda3ae44650bf",
+  "form": [
+    "S",
+    "ABCA"
+  ],
+  "sections": [
+    {
+      "index": 0,
+      "name": "A",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "F[+F]F",
+        "F[+F]F[+F[MF]F]FFK"
+      ],
+      "attempts": 1
+    },
+    {
+      "index": 1,
+      "name": "B",
+      "harmony": "planing",
+      "derivation": [
+        "F",
+        "F[-F]F",
+        "F-F[-F[-F]F]F-F"
+      ],
+      "attempts": 1
+    },
+    {
+      "index": 2,
+      "name": "C",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "FK",
+        "FKK"
+      ],
+      "attempts": 1
+    },
+    {
+      "index": 3,
+      "name": "A",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "FFK",
+        "FFKFFKK"
+      ],
+      "attempts": 1
+    }
+  ],
+  "bars": [
+    {
+      "bar": 1,
+      "section": 0,
+      "center": "G major",
+      "chord": "G",
+      "frets": [
+        3,
+        5,
+        0,
+        0,
+        0,
+        3
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "start: G major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 2,
+      "section": 0,
+      "center": "G major",
+      "chord": "Em",
+      "frets": [
+        0,
+        2,
+        2,
+        0,
+        0,
+        3
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 3,
+      "section": 0,
+      "center": "G major",
+      "chord": "Em",
+      "frets": [
+        0,
+        2,
+        2,
+        0,
+        5,
+        0
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 4,
+      "section": 0,
+      "center": "G major",
+      "chord": "G",
+      "frets": [
+        3,
+        5,
+        0,
+        0,
+        0,
+        3
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 5,
+      "section": 0,
+      "center": "G major",
+      "chord": "G/B",
+      "frets": [
+        7,
+        5,
+        0,
+        0,
+        3,
+        3
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "M stay: G major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 6,
+      "section": 0,
+      "center": "G major",
+      "chord": "Bm7",
+      "frets": [
+        7,
+        5,
+        4,
+        4,
+        0,
+        5
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 7,
+      "section": 0,
+      "center": "G major",
+      "chord": "Am7",
+      "frets": [
+        8,
+        0,
+        7,
+        0,
+        5,
+        0
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 8,
+      "section": 0,
+      "center": "G major",
+      "chord": "G",
+      "frets": [
+        3,
+        5,
+        5,
+        0,
+        0,
+        3
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 9,
+      "section": 0,
+      "center": "G major",
+      "chord": "D7/A",
+      "frets": [
+        5,
+        0,
+        0,
+        7,
+        7,
+        8
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 10,
+      "section": 0,
+      "center": "G major",
+      "chord": "G/B",
+      "frets": [
+        7,
+        5,
+        0,
+        0,
+        8,
+        7
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 11,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        4,
+        5,
+        0,
+        0,
+        6,
+        7
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": 0,
+      "events": [
+        "planing"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 12,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        3,
+        4,
+        0,
+        0,
+        5,
+        6
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -1,
+      "events": [
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 13,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        2,
+        3,
+        0,
+        0,
+        4,
+        5
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -2,
+      "events": [
+        "[",
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 14,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        1,
+        2,
+        0,
+        0,
+        3,
+        4
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -3,
+      "events": [
+        "[",
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 15,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        2,
+        3,
+        0,
+        0,
+        4,
+        5
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -2,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 16,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        3,
+        4,
+        0,
+        0,
+        5,
+        6
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -1,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 17,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        2,
+        3,
+        0,
+        0,
+        4,
+        5
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -2,
+      "events": [
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 18,
+      "section": 2,
+      "center": "C major",
+      "chord": "C/E",
+      "frets": [
+        0,
+        3,
+        5,
+        0,
+        5,
+        3
+      ],
+      "region": [
+        2,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "section: fifth_down to C major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 19,
+      "section": 2,
+      "center": "C major",
+      "chord": "G7",
+      "frets": [
+        3,
+        5,
+        3,
+        0,
+        0,
+        3
+      ],
+      "region": [
+        2,
+        9
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 20,
+      "section": 2,
+      "center": "C major",
+      "chord": "C/E",
+      "frets": [
+        0,
+        3,
+        5,
+        0,
+        5,
+        3
+      ],
+      "region": [
+        2,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 21,
+      "section": 2,
+      "center": "C major",
+      "chord": "G7",
+      "frets": [
+        3,
+        5,
+        3,
+        4,
+        6,
+        3
+      ],
+      "region": [
+        2,
+        9
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 22,
+      "section": 2,
+      "center": "C major",
+      "chord": "C/E",
+      "frets": [
+        0,
+        3,
+        5,
+        0,
+        5,
+        3
+      ],
+      "region": [
+        2,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 23,
+      "section": 3,
+      "center": "C major",
+      "chord": "C",
+      "frets": [
+        8,
+        7,
+        5,
+        0,
+        8,
+        0
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "section: stay to C major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 24,
+      "section": 3,
+      "center": "C major",
+      "chord": "F",
+      "frets": [
+        1,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 25,
+      "section": 3,
+      "center": "C major",
+      "chord": "G7",
+      "frets": [
+        3,
+        2,
+        0,
+        0,
+        0,
+        1
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 26,
+      "section": 3,
+      "center": "C major",
+      "chord": "C/E",
+      "frets": [
+        0,
+        3,
+        2,
+        0,
+        1,
+        3
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 27,
+      "section": 3,
+      "center": "C major",
+      "chord": "Fm",
+      "frets": [
+        1,
+        3,
+        3,
+        1,
+        1,
+        1
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 28,
+      "section": 3,
+      "center": "C major",
+      "chord": "Am",
+      "frets": [
+        5,
+        3,
+        2,
+        2,
+        5,
+        0
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 29,
+      "section": 3,
+      "center": "C major",
+      "chord": "G7",
+      "frets": [
+        3,
+        2,
+        0,
+        0,
+        3,
+        1
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 30,
+      "section": 3,
+      "center": "C major",
+      "chord": "C/E",
+      "frets": [
+        0,
+        3,
+        2,
+        0,
+        1,
+        3
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 31,
+      "section": 3,
+      "center": "C major",
+      "chord": "G7",
+      "frets": [
+        3,
+        2,
+        0,
+        0,
+        3,
+        1
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 32,
+      "section": 3,
+      "center": "C major",
+      "chord": "C/E",
+      "frets": [
+        0,
+        3,
+        2,
+        0,
+        1,
+        3
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    }
+  ]
+}

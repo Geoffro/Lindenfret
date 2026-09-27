@@ -1,0 +1,57 @@
+# Villa-Lobos Etude 1 Variant Generator: Implementation Plan
+
+Design: [design.md](design.md)
+
+Five phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDI, as summarized in the design: the pattern, rhythm, form, palette and planing idiom. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
+
+| Phase | Scope | Exit gate |
+| --- | --- | --- |
+| 0. Foundation | Repo, venv, packaging, reference analysis, config, RNG streams, CLI stub | `analyze_reference.py` reproduces the design's reference facts, and `inspect` prints the same derivation for the same seed on every run |
+| 1. Fretboard and voicer | `Fingering`, enumerate / filter / score, span ≤ 5, fret ≤ 13, chord symbols transposed to all 12 centers | Every palette chord, in every center, has a fingering that passes all hard rules somewhere on the neck, apart from exceptions pinned in the playability test (so far only E♭m/G♭ in E♭ minor), and `inspect --center` shows which hand positions each chord can use |
+| 2. Grammar and harmony | Two-level bracketed L-system, alphabet, length control, tonal centers and modulation, weighted graph, cadences | Changing one rule visibly changes the section plan in `inspect`. `inspect` shows every bar's center, and centers change only at `M`, `]` and section starts |
+| 3. Rendering and export | Pattern with bar repeats and let-ring, ritardandos, music21 score with no key signature, MIDI, MusicXML, manifest | The reference test passes, MusicXML opens in MuseScore with correct notes, spelling and rhythm, and `regenerate` reproduces byte-identical MIDI |
+| 4. Villa-Lobos idiom | Planing mode, Etude 1 preset, batch and curation | A listening pass over 20 seeds finds variants worth practicing |
+
+## Phase 0: Foundation
+
+- [x] `git init`.
+- [x] `.gitignore` for the venv, Python caches, `out/` and `.DS_Store`.
+- [x] Reference MIDI in `reference/Villa-Lobos_Etude_No1b.mid`.
+- [x] Create the venv with Homebrew's Python 3.14: `python3 -m venv .venv`, then `.venv/bin/pip install -e '.[dev]'`. If a different Python version is ever needed, use a conda env.
+- [x] Add `pyproject.toml`: `requires-python = ">=3.11"` (for `tomllib`), depends on music21 and mido, dev extras pytest and hypothesis.
+- [x] Write `tools/analyze_reference.py`. It prints the reference facts in the design, reading the pattern and tuning from the config: the pattern check, bar repeats, frets and chord per bar, left-hand limits and tempo changes. `tests/test_reference.py` checks the same facts.
+- [x] Write `configs/etude1.toml`: pattern, meter, tempo, bar repeat, center weights and moves, minor and major palettes written in E, chord graph weights, planing shape weights, `max_span = 5`, `max_fret = 13`.
+- [x] Add the package skeleton: config dataclasses with a TOML loader that validates every key, the per-stage RNG helper, weighted stochastic L-system rewriting, and `etudegen inspect`, which prints each section's derivation per iteration with its bar count.
+
+## Phase 1: Fretboard and voicer
+
+- [x] Tuning and `Fingering` model; enumeration with span pruning, hard filter, scoring, and sampling among the top candidates (`fretboard.py`).
+- [x] Hard rules from the design: every pattern string sounds, span ≤ 5, no fret above 13, at most 4 fingers with a barre at the lowest fret, required tones and bass present, tensions only on allowed strings.
+- [x] Soft preferences from the reference, weighted in `[voicer]`: span of 3 or less, open strings, small hand movement between bars, few doubled tones other than the root and fifth.
+- [x] A separate `check_fingering()`, used by the tests and asserted every time the voicer chooses.
+- [x] Load the palette's chord symbols and transpose them to all 12 centers with music21 (`chords.py`), with the transposition, spelling and playability tests.
+- [x] Text view: `inspect --chord Em7 --region 0-4` lists the top fingerings, and `inspect --center Gm` shows how many fingerings each palette chord has at each hand position.
+
+## Phase 2: Grammar and harmony
+
+- [x] Length control (`interpret.py`): each section uses its first iteration inside its length range, and re-derives from its RNG stream on overshoot, up to 50 attempts.
+- [x] The walk (`harmony.py`): each section's symbol string becomes bars, with brackets saving and restoring chord, center and fret region, and `+`/`-` stopping at the ends of the neck.
+- [x] `Center` model and center graph: start weights, `M` moves (thirds are major thirds), one move at each graph section's start, and only centers playable in the current region.
+- [x] Weighted chord graph per mode that favors stepwise bass motion and offers only chords playable in the current region. Tonic and dominant chords come from the palette, and `K` plays dominant then tonic, falling back to a step with a note when neither fits.
+- [x] `pipeline.py` plans a whole piece and voices every graph bar; `etudegen inspect --seed N` prints every bar's center, chord, fingering, region, role and events.
+
+## Phase 3: Rendering and export
+
+- [x] Renderer (`render.py`) that plays the fixed pattern over each bar's fingering, repeats each bar, and holds every note to the bar line or its string's next pluck, with the reference's accents as velocities.
+- [x] Reference test: the reference's own fingerings for bars 1–44 render to the reference MIDI's pitch in every 16th-note slot.
+- [x] Ritardando over the last bar pair of each section in the MIDI, marked "rit." and "a tempo" in the notation.
+- [x] music21 score builder (`score.py`): one guitar part of single-line 16ths beamed by beat, treble clef an octave down, a "hold every note" direction, no key signature, pitches spelled from their chords. Checked by rendering with MuseScore 4.
+- [x] MIDI (mido, one channel per string), MusicXML and manifest export (`export.py`), plus the `generate`, `batch` and `regenerate` commands.
+
+## Phase 4: Villa-Lobos idiom
+
+- [x] Planing mode (`planing.py`): a shape generated per sequence (four fretted strings, two open, kind drawn by weight, comfortable span, whole slide in the region), checked against the hard rules at every fret it reaches, and moved by `+` and `-`.
+- [x] Planing bars spelled in the notation without letter clashes, in stacked thirds where possible.
+- [x] Etude 1 preset: graph-mode sections open and close the piece, with planing sequences between them.
+- [x] Batch of 20 generated: `etudegen batch --config configs/etude1.toml --count 20 --first-seed 1` wrote `out/etude1-1` to `out/etude1-20`.
+- [ ] Listen, and record the keepers with their config hash in `curated.toml`.

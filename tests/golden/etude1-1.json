@@ -1,0 +1,698 @@
+{
+  "preset": "etude1",
+  "seed": 1,
+  "config_sha256": "ae55a96d0feb2fc95f2f2e949e728eb5679b930860f66eaedcbbda3ae44650bf",
+  "form": [
+    "S",
+    "ABA"
+  ],
+  "sections": [
+    {
+      "index": 0,
+      "name": "A",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "FFK",
+        "F[MF]FF[+F]FK"
+      ],
+      "attempts": 1
+    },
+    {
+      "index": 1,
+      "name": "B",
+      "harmony": "planing",
+      "derivation": [
+        "F",
+        "F-F",
+        "F-F-F-F",
+        "F-F-F-F-F[-F]F-F[-F]F"
+      ],
+      "attempts": 1
+    },
+    {
+      "index": 2,
+      "name": "A",
+      "harmony": "graph",
+      "derivation": [
+        "F",
+        "F[+F]F",
+        "F[+F]F[+F[+F]F]FMF"
+      ],
+      "attempts": 1
+    }
+  ],
+  "bars": [
+    {
+      "bar": 1,
+      "section": 0,
+      "center": "D minor",
+      "chord": "Dm/A",
+      "frets": [
+        5,
+        5,
+        7,
+        7,
+        6,
+        5
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "start: D minor"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 2,
+      "section": 0,
+      "center": "D minor",
+      "chord": "Edim7",
+      "frets": [
+        0,
+        7,
+        5,
+        6,
+        5,
+        6
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "[",
+        "M stay: D minor"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 3,
+      "section": 0,
+      "center": "D minor",
+      "chord": "E7",
+      "frets": [
+        0,
+        7,
+        6,
+        7,
+        5,
+        0
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 4,
+      "section": 0,
+      "center": "D minor",
+      "chord": "D/F#",
+      "frets": [
+        2,
+        0,
+        0,
+        7,
+        3,
+        5
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 5,
+      "section": 0,
+      "center": "D minor",
+      "chord": "Dm/F",
+      "frets": [
+        1,
+        0,
+        0,
+        2,
+        3,
+        5
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 6,
+      "section": 0,
+      "center": "D minor",
+      "chord": "Bm7b5/F",
+      "frets": [
+        1,
+        0,
+        0,
+        4,
+        0,
+        1
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 7,
+      "section": 0,
+      "center": "D minor",
+      "chord": "A7",
+      "frets": [
+        5,
+        0,
+        5,
+        2,
+        2,
+        0
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "dominant",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 8,
+      "section": 0,
+      "center": "D minor",
+      "chord": "Dm/F",
+      "frets": [
+        1,
+        0,
+        0,
+        2,
+        3,
+        5
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [],
+      "note": ""
+    },
+    {
+      "bar": 9,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        7,
+        0,
+        6,
+        7,
+        6,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": 0,
+      "events": [
+        "planing"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 10,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        6,
+        0,
+        5,
+        6,
+        5,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -1,
+      "events": [
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 11,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        5,
+        0,
+        4,
+        5,
+        4,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -2,
+      "events": [
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 12,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        4,
+        0,
+        3,
+        4,
+        3,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -3,
+      "events": [
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 13,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        3,
+        0,
+        2,
+        3,
+        2,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -4,
+      "events": [
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 14,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        2,
+        0,
+        1,
+        2,
+        1,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -5,
+      "events": [
+        "[",
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 15,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        3,
+        0,
+        2,
+        3,
+        2,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -4,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 16,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        2,
+        0,
+        1,
+        2,
+        1,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -5,
+      "events": [
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 17,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -6,
+      "events": [
+        "[",
+        "-"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 18,
+      "section": 1,
+      "center": null,
+      "chord": null,
+      "frets": [
+        2,
+        0,
+        1,
+        2,
+        1,
+        0
+      ],
+      "region": [
+        0,
+        12
+      ],
+      "role": "planing",
+      "shape": "dim7",
+      "offset": -5,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 19,
+      "section": 2,
+      "center": "F major",
+      "chord": "F/A",
+      "frets": [
+        5,
+        0,
+        3,
+        2,
+        1,
+        1
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "tonic",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "section: relative to F major"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 20,
+      "section": 2,
+      "center": "F major",
+      "chord": "Gm7",
+      "frets": [
+        3,
+        1,
+        0,
+        0,
+        3,
+        1
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 21,
+      "section": 2,
+      "center": "F major",
+      "chord": "Bb",
+      "frets": [
+        6,
+        5,
+        0,
+        3,
+        3,
+        6
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 22,
+      "section": 2,
+      "center": "F major",
+      "chord": "Am7",
+      "frets": [
+        8,
+        0,
+        7,
+        0,
+        5,
+        0
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 23,
+      "section": 2,
+      "center": "F major",
+      "chord": "Bb",
+      "frets": [
+        6,
+        8,
+        8,
+        7,
+        6,
+        6
+      ],
+      "region": [
+        2,
+        11
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 2,
+      "events": [
+        "[",
+        "+"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 24,
+      "section": 2,
+      "center": "F major",
+      "chord": "C7/G",
+      "frets": [
+        3,
+        3,
+        5,
+        0,
+        5,
+        6
+      ],
+      "region": [
+        1,
+        10
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 1,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 25,
+      "section": 2,
+      "center": "F major",
+      "chord": "Gm7",
+      "frets": [
+        3,
+        5,
+        0,
+        0,
+        6,
+        6
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "]"
+      ],
+      "note": ""
+    },
+    {
+      "bar": 26,
+      "section": 2,
+      "center": "F minor",
+      "chord": "Gm7b5/F",
+      "frets": [
+        1,
+        1,
+        3,
+        0,
+        2,
+        3
+      ],
+      "region": [
+        0,
+        9
+      ],
+      "role": "step",
+      "shape": null,
+      "offset": 0,
+      "events": [
+        "M parallel: F minor"
+      ],
+      "note": ""
+    }
+  ]
+}
