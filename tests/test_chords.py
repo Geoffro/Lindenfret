@@ -40,6 +40,42 @@ def test_a_palette_transposes_the_same_from_any_tonic():
     assert in_b_flat.tonic_names == in_e.tonic_names
 
 
+def test_polychord_stacks_its_parts_over_the_lower_chords_root():
+    d_over_c = parse_chord("D|C")
+    assert d_over_c.kind == "major|major"
+    assert d_over_c.root == d_over_c.bass == C
+    assert d_over_c.pitch_classes == {C, 2, E, F_SHARP, G, A}
+    assert d_over_c.required == {C, 2, E, F_SHARP, A}  # only the lower chord leaves out its fifth
+
+
+def test_polychord_requires_its_whole_upper_chord():
+    assert parse_chord("G|E").required == {E, G, 8, B, 2}  # D is G's fifth but E's seventh
+    assert parse_chord("G|C").required == {C, 2, E, G, B}  # G is C's fifth but G's root
+
+
+def test_polychord_parts_share_the_lower_chords_spelling():
+    assert dict(parse_chord("Ab|E").spelling)[8] == "G#"
+
+
+def test_polychords_transpose_part_by_part():
+    table = build_chord_table(Palette("E", frozenset({7}), ("Em", "D|B"), ("E", "F#|E")))
+    assert [s.symbol for s in table.chords[("major", 5)]] == ["F", "G|F"]
+    assert [s.symbol for s in table.chords[("minor", 2)]] == ["Dm", "C|A"]
+
+
+def test_polychord_takes_the_lower_chords_slash_bass():
+    d_over_c_over_e = parse_chord("D|C/E")
+    assert (d_over_c_over_e.root, d_over_c_over_e.bass) == (C, E)
+    table = build_chord_table(Palette("E", frozenset({7}), ("Em",), ("E", "D|C/E")))
+    assert table.chords[("major", 5)][1].symbol == "Eb|Db/F"
+
+
+@pytest.mark.parametrize("figure", ["D|C|E", "D|H", "|C"])
+def test_bad_polychords_raise(figure):
+    with pytest.raises(ChordError):
+        parse_chord(figure)
+
+
 def test_half_diminished_requires_its_flat_fifth():
     chord = parse_chord("F#m7b5/E")
     assert chord.pitch_classes == {F_SHARP, A, C, E}

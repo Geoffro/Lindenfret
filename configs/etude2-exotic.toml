@@ -1,0 +1,126 @@
+# Etude 2 with a wider palette: etude2.toml's chords plus added tones, altered
+# dominants and polychords ("B|A" is B major over A major). The pattern, form
+# and left-hand limits are etude2.toml's. See docs/design.md for each table.
+
+[notation]
+title = "Etude 2 variant, exotic harmony"   # the seed is added
+direction = "let ring"                      # written at the start
+
+[meter]
+time_signature = "4/4"
+tempo = 126              # quarter notes per minute, as the reference starts
+repeat_bars = 2          # each generated bar is played twice
+ritardando = 0.1         # the last bar pair of each section slows by this much
+
+[pattern]                # Etude 2 right hand, confirmed by tools/analyze_reference.py
+contour = [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1]   # up a ladder of nine stops, back down to the second
+note = "16th"
+notes_per_string = 2     # the reference fits with at most two stops on a string
+hand_positions = 2       # a bar may slide up to one new position as it climbs
+max_slide = 3            # frets that slide may cover; the reference needs 3
+# MIDI velocity per note: the reference's median in the bars that follow the contour.
+velocities = [114, 114, 114, 114, 127, 114, 114, 114, 127, 114, 114, 114, 127, 114, 114, 114]
+
+[fretboard]
+tuning = ["E2", "A2", "D3", "G3", "B3", "E4"]   # strings 6 to 1
+max_span = 4             # per hand position; the reference fits within 4
+max_fret = 17            # the reference reaches A5 on string 1
+max_fingers = 4
+tension_strings = [1, 2]
+
+[voicer]                 # soft preferences; the hard rules are in [fretboard] and [pattern]
+comfortable_span = 3
+top_candidates = 8
+temperature = 1.0
+# A nine-stop ladder over three to six pitch classes always doubles, so doubling costs nothing.
+weights = { movement = 1.0, span = 2.0, open_strings = 0.5, doubling = 0.0, shift = 1.0 }
+
+[centers]
+start = { A = 3, E = 2, D = 2, other = 1 }
+start_mode = { major = 3, minor = 1 }
+# Moves by a major third, keeping the mode, are twice as likely as in etude2.toml.
+moves = { stay = 4, fifth_up = 2, fifth_down = 2, relative = 2, parallel = 1, third_up = 2, third_down = 2, semitone_up = 1, semitone_down = 1 }
+
+[palette]
+tonic = "A"                  # the chords are written in A and transposed to the current center
+optional_intervals = [7]     # semitones above the root a voicing may leave out: the perfect fifth
+major = [
+  # etude2.toml's: the chords of the reference's bars 1-18 and 22-47
+  "A", "E7/B", "C#dim7/Bb", "E9/B", "Am", "E/B", "Em/B", "B7", "F#madd9", "C#9/G#", "D#m7b5/A", "AM9/G#",
+  "G#7b9", "C#7b9", "F#9", "B7b9/C", "E9", "Fmaj7/A",
+  # Tonics: sixth and ninth, added ninth, Lydian, B over A (Lydian), E over A (a major ninth), G over A (Mixolydian)
+  "A6 add 9", "Aadd9", "Amaj7 add #11", "B|A", "E|A", "G|A",
+  # Subdominants: E over D (Lydian), and the minor iv's sixth
+  "E|D", "Dm6",
+  # Borrowed from minor: F Lydian, the flat third
+  "Fmaj7 add #11", "Cmaj7",
+  # Altered dominants: flat ninth, sharp fifth, G over E (a sharp ninth), B-flat over E (a tritone apart)
+  "E7b9", "E7#5", "G|E", "Bb|E",
+  # A tritone substitute for E7
+  "Bb7 add #11",
+]
+minor = [
+  # etude2.toml's: the reference's turn to A minor in bars 11-16, and a starting set
+  "Am", "E/B", "Em/B", "E7/B", "E9/B", "Dm/A", "Fmaj7/A", "B7",
+  # Tonics: minor-major seventh, sixth, ninth, and Am11 as G over Am
+  "AmM7", "Am6", "Am9", "G|Am",
+  # The flat side: D minor ninth, F Lydian, the Neapolitan B-flat Lydian
+  "Dm9", "Fmaj7 add #11", "Bbmaj7 add #11",
+  # Over an A bass: B-flat over A (Phrygian)
+  "Bb|A",
+  # Dominants: flat ninth, sharp fifth, G over E (a sharp ninth), F over E (Phrygian)
+  "E7b9", "E7#5", "G|E", "F|E",
+  # The leading tone's diminished seventh
+  "G#dim7",
+]
+
+[graph]
+# Weight of a chord change by how far the bass moves, in semitones. Against
+# etude2.toml, a held bass (a pedal under changing colors) and a tritone count double.
+bass_step = { 0 = 2, 1 = 3, 2 = 3, 3 = 1, 4 = 1, 5 = 3, 6 = 2 }
+reference_bonus = 1      # added weight for chord changes the reference makes; half of etude2.toml's
+reference_paths = [
+  ["A", "E7/B", "C#dim7/Bb", "E9/B", "A", "Am", "E/B", "Em/B", "B7"],                              # bars 1-18
+  ["A", "F#madd9", "C#9/G#", "D#m7b5/A", "AM9/G#", "G#7b9", "C#7b9", "F#9", "B7", "B7b9/C", "E9", "A"],   # bars 22-45
+  ["A", "Fmaj7/A"],                                                                                # bars 44-47
+]
+
+[form]
+axiom = "S"
+iterations = 1
+rules.S = [
+  { to = "A B A", weight = 3 },
+  { to = "A B C A", weight = 1 },
+]
+
+[sections.A]             # the tonic and its neighbours, like bars 1-18
+axiom = "F"
+rules.F = [
+  { to = "F[+F]F", weight = 2 },
+  { to = "F[MF]F", weight = 1 },
+  { to = "FFK", weight = 1 },
+]
+length = [6, 10]         # bars before repetition
+harmony = "graph"
+region = "0-12"
+
+[sections.B]             # travelling through keys, like the chain of fifths in bars 22-43
+axiom = "F"
+rules.F = [
+  { to = "FMF", weight = 2 },
+  { to = "F[MF]F", weight = 1 },
+  { to = "FK", weight = 1 },
+]
+length = [6, 12]
+harmony = "graph"
+region = "0-12"
+
+[sections.C]             # higher up the neck, like bars 13-16
+axiom = "F"
+rules.F = [
+  { to = "F[+F]F", weight = 1 },
+  { to = "FK", weight = 1 },
+]
+length = [4, 8]
+harmony = "graph"
+region = "5-17"

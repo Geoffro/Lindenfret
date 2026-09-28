@@ -15,7 +15,8 @@ def piece_report(piece: Piece) -> str:
     """The form, each section's derivation, and every bar's center, chord and fingering."""
     lines = [f"seed {piece.seed}", f"form: {' -> '.join(piece.form)}"]
     number = 0
-    width = max(14, max(len(bar.fingering.tab()) for bar in piece.bars) + 2)
+    chord_width = max(11, max(len(_chord(bar)) for bar in piece.bars) + 1)
+    fret_width = max(14, max(len(bar.fingering.tab()) for bar in piece.bars) + 2)
     for plan in piece.sections:
         section = plan.section
         low, high = section.length
@@ -28,24 +29,30 @@ def piece_report(piece: Piece) -> str:
         for iteration, word in enumerate(plan.derivation):
             used = "  <- used" if iteration == len(plan.derivation) - 1 else ""
             lines.append(f"  {iteration:>2}  {bar_count(word):>4} bars  {_clip(word)}{used}")
-        lines.append(f"  {'bar':>4}  {'center':<10}{'chord':<11}{'frets 6..1':<{width}}{'region':<8}{'role':<10}events")
+        lines.append(
+            f"  {'bar':>4}  {'center':<10}{'chord':<{chord_width}}{'frets 6..1':<{fret_width}}"
+            f"{'region':<8}{'role':<10}events"
+        )
         for bar in piece.bars:
             if bar.section != plan.index:
                 continue
             number += 1
-            lines.append(f"  {number:>4}  {_bar_row(piece, bar, width)}")
+            lines.append(f"  {number:>4}  {_bar_row(piece, bar, chord_width, fret_width)}")
     return "\n".join(lines)
 
 
-def _bar_row(piece: Piece, bar: Bar, width: int) -> str:
+def _chord(bar: Bar) -> str:
+    return bar.chord.symbol if bar.chord else f"{bar.shape} shape"
+
+
+def _bar_row(piece: Piece, bar: Bar, chord_width: int, fret_width: int) -> str:
     center = piece.graph.name(bar.center) if bar.center else "-"
-    chord = bar.chord.symbol if bar.chord else f"{bar.shape} shape"
     frets = bar.fingering.tab()
     events = "; ".join(bar.events)
     if bar.note:
         events = f"{events}; {bar.note}" if events else bar.note
     region = f"{bar.region[0]}-{bar.region[1]}"
-    return f"{center:<10}{chord:<11}{frets:<{width}}{region:<8}{bar.role:<10}{events}".rstrip()
+    return f"{center:<10}{_chord(bar):<{chord_width}}{frets:<{fret_width}}{region:<8}{bar.role:<10}{events}".rstrip()
 
 
 def fingering_report(voicer: Voicer, spec: ChordSpec, region: Region, top: int) -> str:

@@ -4,6 +4,11 @@ Palette chords are written in the palette's tonic. Before planning, each is
 parsed with music21 and transposed to all 12 centers in both modes, so
 everything downstream works with plain ChordSpec values and never touches
 music21.
+
+A polychord stacks one chord symbol over another, upper first: "D|C" is D
+major over C major. The lower chord gives the root and bass, and only it may
+leave out its optional intervals: the upper chord's tones are tensions over
+the lower root, so a voicing keeps them all.
 """
 
 from __future__ import annotations
@@ -28,12 +33,12 @@ class ChordError(ConfigError):
 
 @dataclass(frozen=True)
 class ChordSpec:
-    symbol: str  # as written for its center, e.g. "Gm/Bb"
-    kind: str  # music21's chord kind, e.g. "minor-seventh"
+    symbol: str  # as written for its center, e.g. "Gm/Bb" or "D|C"
+    kind: str  # music21's chord kind, e.g. "minor-seventh"; "major|major" for a polychord
     root: int  # pitch class, C = 0
     bass: int
     pitch_classes: frozenset[int]
-    required: frozenset[int]  # every chord tone except the optional intervals, plus the bass
+    required: frozenset[int]  # chord tones minus the optional intervals above the root, plus the bass and any upper chord
     tensions: frozenset[int]  # allowed non-chord tones; none until tensions are enabled
     spelling: tuple[tuple[int, str], ...]  # (pitch class, note name) for each chord tone
 
@@ -59,12 +64,11 @@ class ChordTable:
 
 
 def parse_chord(figure: str, optional: Collection[int] = (PERFECT_FIFTH,)) -> ChordSpec:
-    """A ChordSpec for a chord symbol exactly as written, e.g. "F#m7b5/E".
+    """A ChordSpec for a chord symbol exactly as written, e.g. "F#m7b5/E" or "D|C".
 
     `optional` lists the semitones above the root that a voicing may leave out.
     """
-    symbol = _parse(figure)
-    return _spec(figure, symbol.pitches, symbol.root(), symbol.bass(), symbol.chordKind, optional)
+    return _spec(figure, _parse(figure), optional)
 
 
 def build_chord_table(palette: Palette) -> ChordTable:
@@ -79,7 +83,7 @@ def build_chord_table(palette: Palette) -> ChordTable:
     tonic_names: dict[tuple[str, int], str] = {}
     chords: dict[tuple[str, int], tuple[ChordSpec, ...]] = {}
     for mode in MODES:
-        parsed = [(figure, _parse(figure)) for figure in getattr(palette, mode)]
+        parsed = [_parse(figure) for figure in getattr(palette, mode)]
         for tonic in range(12):
             options = [
                 _transpose_palette(parsed, palette, name, mode) for name in _names_for(tonic)
@@ -91,6 +95,17 @@ def build_chord_table(palette: Palette) -> ChordTable:
                 for i in range(len(parsed))
             )
     return ChordTable(palette.tonic, tonic_names, chords)
+
+
+@dataclass(frozen=True)
+class _Part:
+    """One chord symbol of a figure: the whole figure, or one part of a polychord."""
+
+    figure: str  # as written, e.g. "Gm/Bb"
+    pitches: tuple[pitch.Pitch, ...]
+    root: pitch.Pitch
+    bass: pitch.Pitch
+    kind: str
 
 
 @dataclass(frozen=True)
@@ -108,13 +123,11 @@ class _Option:
 
 
 def _transpose_palette(
-    parsed: Sequence[tuple[str, harmony.ChordSymbol]], palette: Palette, tonic: str, mode: str
+    parsed: Sequence[tuple[_Part, ...]], palette: Palette, tonic: str, mode: str
 ) -> _Option:
     home = pitch.Pitch(_music21_name(palette.tonic))
     shift = interval.Interval(noteStart=home, noteEnd=pitch.Pitch(tonic))
-    spelled = tuple(
-        _transpose(figure, symbol, shift, palette.optional_intervals) for figure, symbol in parsed
-    )
+    spelled = tuple(_transpose(parts, shift, palette.optional_intervals) for parts in parsed)
     return _Option(
         tonic,
         spelled,
@@ -123,20 +136,28 @@ def _transpose_palette(
     )
 
 
-def _transpose(
-    figure: str, symbol: harmony.ChordSymbol, shift: interval.Interval, optional: Collection[int]
-) -> _Spelled:
-    _, suffix, bass_text = _FIGURE_RE.match(figure).groups()
-    pitches = [p.transpose(shift) for p in symbol.pitches]
-    root = symbol.root().transpose(shift)
-    bass = symbol.bass().transpose(shift)
-    text = _display(root.name) + suffix + (f"/{_display(bass.name)}" if bass_text else "")
+def _transpose(parts: Sequence[_Part], shift: interval.Interval, optional: Collection[int]) -> _Spelled:
+    moved = []
+    for part in parts:
+        _, suffix, bass_text = _FIGURE_RE.match(part.figure).groups()
+        root, bass = part.root.transpose(shift), part.bass.transpose(shift)
+        text = _display(root.name) + suffix + (f"/{_display(bass.name)}" if bass_text else "")
+        moved.append(_Part(text, tuple(p.transpose(shift) for p in part.pitches), root, bass, part.kind))
+    pitches = [p for part in moved for p in part.pitches]
     doubles = sum(1 for p in pitches if p.accidental is not None and abs(p.accidental.alter) >= 2)
-    return _Spelled(_spec(text, pitches, root, bass, symbol.chordKind, optional), doubles)
+    return _Spelled(_spec("|".join(part.figure for part in moved), moved, optional), doubles)
 
 
-def _parse(figure: str) -> harmony.ChordSymbol:
-    match = _FIGURE_RE.match(figure)
+def _parse(figure: str) -> tuple[_Part, ...]:
+    """The parts of `figure`, upper first: one chord symbol, or two for a polychord."""
+    parts = figure.split("|")
+    if len(parts) > 2:
+        raise ChordError(f"a polychord stacks two chord symbols: {figure!r}")
+    return tuple(_parse_part(part, figure) for part in parts)
+
+
+def _parse_part(text: str, figure: str) -> _Part:
+    match = _FIGURE_RE.match(text)
     if not match:
         raise ChordError(f"not a chord symbol: {figure!r}")
     # music21 spells flats with "-": it rejects "Abm" and reads "Bb7" as B7.
@@ -148,20 +169,24 @@ def _parse(figure: str) -> harmony.ChordSymbol:
         raise ChordError(f"can't parse chord symbol {figure!r}: {e}") from e
     if not symbol.pitches or symbol.root() is None:
         raise ChordError(f"can't parse chord symbol {figure!r}")
-    return symbol
+    return _Part(text, tuple(symbol.pitches), symbol.root(), symbol.bass(), symbol.chordKind)
 
 
-def _spec(text, pitches, root, bass, kind: str, optional: Collection[int]) -> ChordSpec:
-    pitch_classes = frozenset(p.pitchClass for p in pitches)
-    left_out = {(root.pitchClass + i) % 12 for i in optional}
-    names = {p.pitchClass: _display(p.name) for p in [*pitches, root, bass]}
+def _spec(text: str, parts: Sequence[_Part], optional: Collection[int]) -> ChordSpec:
+    *upper, lower = parts
+    pitch_classes = frozenset(p.pitchClass for part in parts for p in part.pitches)
+    left_out = {(lower.root.pitchClass + i) % 12 for i in optional}
+    left_out -= {p.pitchClass for part in upper for p in part.pitches}
+    required = (pitch_classes - left_out) | {lower.bass.pitchClass}
+    # The lower part comes last, so its spelling wins where the parts share a pitch class.
+    names = {p.pitchClass: _display(p.name) for part in parts for p in [*part.pitches, part.root, part.bass]}
     return ChordSpec(
         symbol=text,
-        kind=kind,
-        root=root.pitchClass,
-        bass=bass.pitchClass,
+        kind="|".join(part.kind for part in parts),
+        root=lower.root.pitchClass,
+        bass=lower.bass.pitchClass,
         pitch_classes=pitch_classes,
-        required=(pitch_classes - left_out) | {bass.pitchClass},
+        required=required,
         tensions=frozenset(),
         spelling=tuple(sorted(names.items())),
     )

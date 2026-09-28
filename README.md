@@ -29,7 +29,7 @@ This creates `out/etude1-7/` containing:
 - `piece.musicxml`: standard notation, which opens in MuseScore.
 - `manifest.json`: the seed, config and plan used to rebuild the piece.
 
-Leave out `--seed` to pick one at random. For Etude 2, use `--config configs/etude2.toml`; its pieces go to `out/etude2-<seed>/`.
+Leave out `--seed` to pick one at random. For Etude 2, use `--config configs/etude2.toml`; its pieces go to `out/etude2-<seed>/`. For wider harmony, with added-tone chords, altered dominants and polychords, use `configs/etude1-exotic.toml` or `configs/etude2-exotic.toml`.
 
 Write a batch of pieces to listen through:
 
@@ -69,11 +69,12 @@ It also answers questions about the fretboard:
 ```sh
 .venv/bin/lindenfret inspect --config configs/etude1.toml --chord Em7 --region 0-4   # best fingerings of a chord
 .venv/bin/lindenfret inspect --config configs/etude1.toml --center Gm                # where each chord in a key is playable
+.venv/bin/lindenfret inspect --config configs/etude1.toml --chord 'D|C'              # quote a polychord for the shell
 ```
 
 ## Experimenting
 
-Everything musical is set in the presets, [configs/etude1.toml](configs/etude1.toml) and [configs/etude2.toml](configs/etude2.toml): the right-hand pattern, the grammar rules, section lengths and fret regions, the chord palette and its key, key-change weights, voicing preferences and playability limits. Etude 1's pattern names a string for each note; Etude 2's is a contour that climbs a ladder of stops, several to a string. To try a variation, copy the preset under a new name, or change it on a branch. The config is checked when it loads, so a mistake fails with a message naming the key.
+Everything musical is set in the presets, [configs/etude1.toml](configs/etude1.toml) and [configs/etude2.toml](configs/etude2.toml): the right-hand pattern, the grammar rules, section lengths and fret regions, the chord palette and its key, key-change weights, voicing preferences and playability limits. Etude 1's pattern names a string for each note; Etude 2's is a contour that climbs a ladder of stops, several to a string. The exotic presets differ from these only in their palettes and harmony weights. Palette chords are chord symbols such as `F#m7b5/E` or `Emaj7 add #11`, or polychords such as `D|C`, D major over C major. To try a variation, copy the preset under a new name, or change it on a branch. The config is checked when it loads, so a mistake fails with a message naming the key.
 
 Record the pieces worth practicing in [curated.toml](curated.toml), with each piece's seed and config hash.
 

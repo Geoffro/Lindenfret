@@ -2,7 +2,7 @@
 
 ## Summary
 
-Lindenfret is a Python package that turns a seed and a config file into a playable variant of one of Villa-Lobos's études, Etude 1 or Etude 2, with one preset for each. Each variant keeps the original's right-hand pattern and rhythm. Everything else is generated from the seed, and nothing is copied from the original. An L-system generates the form, harmony, modulations, planing shapes and ending, and a fretboard voicer makes sure every bar can be played. Each run writes MIDI and MusicXML notation, plus a manifest that regenerates the piece exactly.
+Lindenfret is a Python package that turns a seed and a config file into a playable variant of one of Villa-Lobos's études, Etude 1 or Etude 2. Each étude has a preset, and an exotic variant whose palette adds richer chords and polychords. Each variant keeps the original's right-hand pattern and rhythm. Everything else is generated from the seed, and nothing is copied from the original. An L-system generates the form, harmony, modulations, planing shapes and ending, and a fretboard voicer makes sure every bar can be played. Each run writes MIDI and MusicXML notation, plus a manifest that regenerates the piece exactly.
 
 The musical model comes from analyses of MIDI files of the originals, summarized under [Etude 1](#the-reference-etude-1) and [Etude 2](#the-reference-etude-2). The build plan is in [plan.md](plan.md).
 
@@ -113,7 +113,7 @@ Constraints, fixed for now:
 
 | Constraint | Value |
 | --- | --- |
-| Target | Etudes 1 and 2, one preset each |
+| Target | Etudes 1 and 2: a preset each, and an exotic variant of each |
 | Right-hand pattern | The étude's own, fixed in its preset |
 | Rhythm | The original's: 16 sixteenth notes per bar in 4/4, each bar played twice |
 | Key | No key signature and no fixed tonal center; the center moves |
@@ -266,9 +266,11 @@ A `Center` is a tonic pitch class plus a mode, minor or major. It is harmonic st
 
 **Etude 1 uses both.** Graph-mode sections open and close the piece, and planing sequences sit between them, as in the reference's bars 1–22, 23–44 and 47–54. With the form rule `S → A B A`, A is graph mode and B is planing mode. The two A sections need not share a center.
 
-Palette entries are chord symbols (`Em`, `F#m7b5/E`, `Bsus4`). Before planning, `chords.py` parses each with `music21.harmony.ChordSymbol` and transposes it to all 12 centers, spelled from the chord: E minor moved to G gives G B♭ D, not G A♯ D.
+Palette entries are chord symbols (`Em`, `F#m7b5/E`, `Bsus4`, `Emaj7 add #11`). Before planning, `chords.py` parses each with `music21.harmony.ChordSymbol` and transposes it to all 12 centers, spelled from the chord: E minor moved to G gives G B♭ D, not G A♯ D.
+- **Polychords** stack two symbols, upper first: `D|C` is D major over C major. The lower chord gives the root and bass. music21 has no polychord symbols, so `chords.py` parses the parts separately.
+- **Symbols to avoid**: music21 misreads `E69`; write `E6 add 9`.
 - **Key spelling**: each center takes the tonic spelling with fewer key-signature accidentals (D♭ major, G♯ minor). Between equal key signatures, it takes the one that gives the palette fewer double sharps and flats (E♭ minor, F♯ major). A chord that would still need a double accidental is respelled on its own.
-- **Required tones**: every chord tone except those at the palette's `optional_intervals` above the root, plus the bass. Both presets leave out only the perfect fifth.
+- **Required tones**: every chord tone except those at the palette's `optional_intervals` above the root, plus the bass. A polychord's upper chord is required whole, since its tones are tensions over the lower root: `D|C` may leave out G but not A, its thirteenth. Every preset leaves out only the perfect fifth.
 - **Tensions** are off in the first version, so voicings use chord tones only. When enabled, they come from the current center's scale and sound only on `tension_strings`.
 
 **Spelling without a key signature.** The notation has no key signature, so every pitch is written with its accidental, spelled from its chord symbol after transposition. Planing bars have no chord symbol. Their open strings keep plain names, and `score.py` tries every enharmonic spelling of the shape's fretted notes. It keeps the one with the fewest letters shared by two different notes (no B♯ beside an open B), then letters stacked in thirds, then the fewest accidentals. The reference's shape reads G♯ B D F, then A♯ C♯ E G, then D♯ F♯ A C as it slides down.
@@ -345,6 +347,8 @@ LSystemsGenerator/
   configs/
     etude1.toml                  Etude 1 preset
     etude2.toml                  Etude 2 preset
+    etude1-exotic.toml           each preset with a wider palette: added tones, altered dominants, polychords
+    etude2-exotic.toml
   curated.toml                   keepers from listening passes
   reference/
     Villa-Lobos_Etude_No1b.mid   MIDIs of the originals
@@ -388,6 +392,7 @@ LSystemsGenerator/
 | Harmony for Etude 1 | Mixed: graph-mode sections open and close the piece, with planing sequences between them | Mirrors the reference's form; graph mode establishes centers and cadences, planing gives the sliding-shape color | Graph only; planing only |
 | Fixed material | None: endings, planing shapes and chords are all generated | Every piece is derived entirely from its seed; the reference supplies vocabulary, not content | Copying the reference's closing chords and planing shape |
 | Chord definitions | Chord symbols written in the palette's `tonic`, transposed to each center with music21 before planning | Reads like the reference; music21 spells transposed chords correctly | Roman numerals; hand-typed pitch lists |
+| Richer harmony | Separate exotic presets that keep each base palette and add to it, with polychords such as `D\|C` | The base presets stay close to the references; polychords read as written and keep each triad's spelling | Widening the base palettes; extended-chord names such as C6/9♯11 for D over C |
 | Guitar data | String and fret kept on every note | Enables playability checks and let-ring MIDI | Pitches only |
 | music21's role | Chord parsing before planning, and the notation; MIDI is written with mido, one channel per string | Core stays fast and testable without music21; held notes on two strings at the same pitch can't cut each other off; byte-identical MIDI is easy to guarantee | music21 for the MIDI too; mido only, dropping notation |
 | Randomness | One `random.Random` per stage, seeded from `hashlib` of (seed, stage name) | Changing the voicer doesn't reshuffle the form. `hashlib`, not `hash()`, because Python salts string hashes per process | One global random stream |
@@ -402,7 +407,8 @@ LSystemsGenerator/
 - **Playability test**: every palette chord in every center has a fingering somewhere on the neck, apart from known exceptions: E♭m/G♭ in E♭ minor for Etude 1, and the chords listed under [Ladders](#ladders-for-a-contour-ladderpy) for Etude 2. A new unplayable chord fails the test.
 - **Reference tests**: the facts in both reference sections are checked against the MIDI. Feeding Etude 1's own fingerings for bars 1–44 through `render.py` reproduces the reference's pitch in every 16th-note slot. For Etude 2, every pattern bar's ladder is playable under the preset and renders back to the reference's pitches. Both presets' accents are their reference's medians.
 - **Pattern test**: every rendered bar plays exactly the configured strings or contour, in order, and is repeated as configured.
-- **Golden snapshots**: manifests for fixed seeds of both presets are checked in under `tests/golden/`, without the config text and git commit. A diff means behavior changed; to accept it on purpose, delete the snapshot and rerun the tests to write a new one.
+- **Exotic presets**: each matches its base preset apart from the harmony, adds no chord that is unplayable in any center, and uses polychords.
+- **Golden snapshots**: manifests for fixed seeds of every preset are checked in under `tests/golden/`, without the config text and git commit. A diff means behavior changed; to accept it on purpose, delete the snapshot and rerun the tests to write a new one.
 - **Export round trip**: re-parse the MusicXML with music21 and confirm bar count, pitches, rhythm, beaming and directions survive, and that there is no key signature. The MIDI's tempo map carries the ritardandos.
 - **Ladder tests**: each broken rule is named, the reference's own ladders and slides the hand could put off are found, and a fretted note stops ringing when the hand moves.
 - **Planing tests**: shapes are classified by what their fretted notes form, each slide keeps one shape shifted by the bar's offset, every position passes the physical rules, and the reference's shape is spelled in stacked thirds.

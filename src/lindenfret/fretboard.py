@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import math
 import random
-from collections import Counter
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
+from typing import NamedTuple
 
 from lindenfret.chords import ChordSpec
 from lindenfret.config import Fretboard, Pattern, VoicerSettings
@@ -229,8 +229,7 @@ def _pc_name(spec: ChordSpec, pc: int) -> str:
 Voicing = Fingering | Ladder  # a fingering for a string pattern, a ladder for a contour
 
 
-@dataclass(frozen=True)
-class Score:
+class Score(NamedTuple):  # a tuple, since every candidate of every bar gets one
     movement: float  # hand shift plus changed strings or stops since the previous bar
     span_excess: int  # frets beyond the comfortable span
     open_strings: int
@@ -246,19 +245,20 @@ def score(
     if previous is not None:
         movement = abs(fingering.position - previous.position) + 0.25 * fingering.changed(previous)
     span_excess = max(0, fingering.span - settings.comfortable_span)
-    counts = Counter(p % 12 for p in fingering.sounding)
-    plain = {spec.root, (spec.root + 7) % 12}
-    doubling = sum(n - 1 for pc, n in counts.items() if pc not in plain)
+    plain = (spec.root, (spec.root + 7) % 12)
+    others = [pc for pc in (p % 12 for p in fingering.sounding) if pc not in plain]
+    doubling = len(others) - len(set(others))
+    open_strings, shifts = fingering.open_strings, fingering.shifts
     w = settings.weights
     total = (
         w["movement"] * movement
         + w["span"] * span_excess
-        - w["open_strings"] * fingering.open_strings
+        - w["open_strings"] * open_strings
         + w["doubling"] * doubling
     )
-    if fingering.shifts:
-        total += w["shift"] * fingering.shifts
-    return Score(movement, span_excess, fingering.open_strings, doubling, fingering.shifts, total)
+    if shifts:
+        total += w["shift"] * shifts
+    return Score(movement, span_excess, open_strings, doubling, shifts, total)
 
 
 class Voicer:

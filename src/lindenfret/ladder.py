@@ -34,8 +34,8 @@ class Ladder:
         return tuple((count - index, fret) for index, frets in enumerate(self.frets) for fret in frets)
 
     @property
-    def sounding(self) -> list[int]:
-        return list(self.pitches)
+    def sounding(self) -> tuple[int, ...]:
+        return self.pitches
 
     @cached_property
     def span(self) -> int:
@@ -53,7 +53,7 @@ class Ladder:
         """Open stops."""
         return sum(1 for _, fret in self.stops if fret == 0)
 
-    @property
+    @cached_property
     def shifts(self) -> int:
         return max(self.hands)
 

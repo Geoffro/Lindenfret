@@ -2,7 +2,7 @@
 
 Design: [design.md](design.md)
 
-Six phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDIs, as summarized in the design: the pattern, rhythm, form, palette, planing idiom and left-hand limits. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
+Seven phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDIs, as summarized in the design: the pattern, rhythm, form, palette, planing idiom and left-hand limits. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
 
 | Phase | Scope | Exit gate |
 | --- | --- | --- |
@@ -12,6 +12,7 @@ Six phases, built in order. Each ends in a gate you can check from the command l
 | 3. Rendering and export | Pattern with bar repeats and let-ring, ritardandos, music21 score with no key signature, MIDI, MusicXML, manifest | The reference test passes, MusicXML opens in MuseScore with correct notes, spelling and rhythm, and `regenerate` reproduces byte-identical MIDI |
 | 4. Villa-Lobos idiom | Planing mode, Etude 1 preset, batch and curation | A listening pass over 20 seeds finds variants worth practicing |
 | 5. Etude 2 | Preset-level palette key, optional tones and notation; contour patterns over ladders of stops; Etude 2 reference analysis and preset | Etude 1's plans are unchanged apart from its preset hash, every Etude 2 reference bar is playable under its preset, and a listening pass over 20 Etude 2 seeds finds variants worth practicing |
+| 6. Exotic harmony | Polychord symbols; an exotic preset for each étude, with a wider palette and harmony weights | Every added chord is playable in every center, and a listening pass over 20 seeds of each finds variants worth practicing |
 
 ## Phase 0: Foundation
 
@@ -67,3 +68,10 @@ Six phases, built in order. Each ends in a gate you can check from the command l
 - [x] Both presets' velocities are the reference's medians, which `analyze_reference.py` now computes.
 - [x] Batch of 20 generated: `lindenfret batch --config configs/etude2.toml --count 20 --first-seed 1` wrote `out/etude2-1` to `out/etude2-20`.
 - [ ] Listen to a batch of 20 Etude 2 seeds, tune the minor palette, form rules and `shift` weight by ear, and record keepers in `curated.toml`.
+
+## Phase 6: Exotic harmony
+
+- [x] Polychords in palettes: `D|C` stacks D major over C major; only the lower chord may leave out its optional intervals.
+- [x] `configs/etude1-exotic.toml` and `configs/etude2-exotic.toml`: each base palette plus added-tone tonics, Lydian, Dorian and Phrygian polychords, altered dominants and a tritone substitute. Held basses and tritone moves weigh double, moves by a major third are twice as likely, and the reference bonus is halved.
+- [x] Batches of 20 generated: `lindenfret batch --config configs/etude1-exotic.toml --count 20 --first-seed 1`, and the same for `etude2-exotic.toml`, wrote `out/etude1-exotic-1` to `-20` and `out/etude2-exotic-1` to `-20`.
+- [ ] Listen to 20 seeds of each, prune chords that don't fit by ear, and record keepers in `curated.toml`.
