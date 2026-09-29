@@ -3,7 +3,7 @@ from pathlib import Path
 
 import mido
 import pytest
-from music21 import clef, converter, expressions, key
+from music21 import clef, converter, expressions, key, tempo
 
 from lindenfret.cli import main
 from lindenfret.config import parse_config_text
@@ -67,6 +67,8 @@ def test_midi_tempo_map_follows_the_rendering(written):
     assert [onset for onset, _ in tempos] == [onset for onset, _ in written.rendering.tempos]
     assert [bpm for _, bpm in tempos] == pytest.approx([bpm for _, bpm in written.rendering.tempos], abs=0.01)
     assert min(bpm for _, bpm in tempos) < CONFIG.meter.tempo  # the ritardandos reach the MIDI
+    signature = next(m for m in midi.tracks[0] if m.type == "time_signature")
+    assert (signature.numerator, signature.denominator, signature.clocks_per_click) == (4, 4, 24)
 
 
 def test_regenerate_gives_byte_identical_midi(written, capsys):
@@ -87,6 +89,8 @@ def test_musicxml_round_trip(written, parsed):
         assert [n.beams.getTypes() for n in notes] == beat * 4
     first = [n.nameWithOctave.replace("-", "b") for n in measures[0].recurse().notes]
     assert first == [n.name for n in written.rendering.measures[0].notes]
+    mark = parsed.recurse().getElementsByClass(tempo.MetronomeMark).first()
+    assert (mark.number, mark.referent.quarterLength) == (CONFIG.meter.tempo, 1.0)
 
 
 def test_musicxml_marks_the_hold_and_the_ritardandos(written, parsed):

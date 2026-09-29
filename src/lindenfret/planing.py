@@ -116,7 +116,7 @@ def plane(bars: Sequence[Bar], section: Section, config: Config, rng: random.Ran
             base = min(max(base, lowest), highest - shape.reach)
             note = f"shape held at fret {base}: no room to slide further"
         fingering = Fingering.from_frets(shape.frets(base), fretboard)
-        problems = check_fingering(fingering, None, fretboard, config.pattern.strings, section.region)
+        problems = check_fingering(fingering, None, fretboard, config.pattern, section.region)
         assert not problems, f"planing shape at fret {base} breaks a hard rule: {problems}"
         planed.append(replace(bar, fingering=fingering, shape=kind, note=note or bar.note))
     return planed

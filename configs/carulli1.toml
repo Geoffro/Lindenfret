@@ -1,0 +1,122 @@
+# Carulli's right hand, p i m p i m, over harmony he never used. The key
+# sections have no plain triads or sevenths, only quartal, Lydian, Dorian and
+# altered chords, and the middle section is in Messiaen's modes. The thumb
+# plays the bass on string 6, 5 or 4, then the G string; i and m play strings
+# 2 and 1. Four notes sound in a bar, so every chord has at most four tones
+# besides a perfect fifth.
+# See docs/design.md for each table.
+
+[notation]
+title = "Carulli-style study 1"   # the seed is added
+direction = "let ring"            # written at the start
+
+[meter]
+time_signature = "6/8"
+tempo = 96               # quarter notes per minute: a dotted quarter at 64
+repeat_bars = 1          # each generated bar is played once
+ritardando = 0.1         # the last bar of each section slows by this much
+
+[pattern]                # p i m p i m
+strings = ["bass", 2, 1, 3, 2, 1]
+bass_strings = [6, 5, 4]     # the bass note is on whichever of these the fingering puts it
+note = "8th"
+velocities = [96, 72, 76, 84, 72, 76]   # MIDI velocity per note: the bass leads, the G string marks beat 2
+
+[fretboard]
+tuning = ["E2", "A2", "D3", "G3", "B3", "E4"]   # strings 6 to 1
+max_span = 4             # highest fretted minus lowest fretted
+max_fret = 12
+max_fingers = 4
+tension_strings = [1, 2]
+
+[voicer]                 # soft preferences; the hard rules are in [fretboard] and [pattern]
+comfortable_span = 3     # spans above this cost extra
+top_candidates = 8       # sample among this many of the best fingerings
+temperature = 1.0        # 0 always takes the best; higher gives more variety
+# Open strings count double: they ring against fretted seconds and fourths.
+weights = { movement = 1.0, span = 2.0, open_strings = 1.0, doubling = 1.0 }
+
+[centers]                # weights; a study starts on an open string's key
+start = { E = 3, A = 3, D = 2, G = 1, B = 1, other = 0 }
+start_mode = { minor = 1, major = 1 }
+# Keys move by major thirds and semitones as often as by fifths, and between
+# minor and major on one tonic, never to the relative key.
+moves = { stay = 3, fifth_up = 1, fifth_down = 1, parallel = 2, third_up = 2, third_down = 2, semitone_up = 1, semitone_down = 1 }
+
+[palette]
+tonic = "A"                  # the chords are written in A and transposed to the current center
+optional_intervals = [7]     # semitones above the root a voicing may leave out: the perfect fifth
+minor = [
+  "Am7 add 11", "Amadd9", "Am6 add 9", "AmM7",           # tonics: quartal, a cluster, Dorian, minor-major
+  "E7#9", "E7b9", "E7#5",                                # altered dominants
+  "Esus4 add b9", "E7sus4 add b9",                       # Phrygian suspensions over the dominant
+  "Bb7 add #11",                                         # the tritone substitute
+  "Bbmaj7 add #11", "Fmaj7 add #11", "Ebmaj7 add #11",   # Lydian chords on bII, bVI and the tritone
+  "Dm6 add 9", "Bm7 add 11", "Dsus4 add 9",              # Dorian iv, quartal ii and IV
+  "Cmaj7#5", "F7 add #11",                               # Lydian augmented III, Lydian dominant bVI
+]
+major = [
+  "Amaj7 add #11", "A6 add 9", "Aadd9", "Amaj7#5",       # tonics: Lydian, pentatonic, an added ninth, Lydian augmented
+  "E7 add #11", "E7#9", "E7b9", "E7#5",                  # Lydian dominant and altered dominants
+  "E7sus4", "Asus4 add 9",                               # quartal
+  "Dmaj7 add #11", "Gmaj7 add #11", "Cmaj7 add #11", "Fmaj7 add #11",   # Lydian chords on IV, bVII, bIII and bVI
+  "F#m7 add 11", "Bm7 add 11", "C#m7 add 11",            # quartal vi, ii and iii
+  "Dadd9/F#",
+]
+
+[graph]
+# Weight of a chord change by how far the bass moves, in semitones: steps,
+# thirds and tritones over fifths.
+bass_step = { 0 = 1, 1 = 3, 2 = 3, 3 = 2, 4 = 2, 5 = 1, 6 = 2 }
+reference_bonus = 2      # added weight for the chord changes below
+reference_paths = [
+  ["Am7 add 11", "Bbmaj7 add #11", "Am7 add 11"],                                  # a Lydian neighbour a semitone up
+  ["Amadd9", "Fmaj7 add #11", "Ebmaj7 add #11", "E7#9", "AmM7"],                   # Lydian chords sliding down to the dominant
+  ["Am6 add 9", "Dm6 add 9", "Bb7 add #11", "Am7 add 11"],                         # Dorian, then the tritone substitute
+  ["Esus4 add b9", "E7b9", "AmM7"],                                                # a Phrygian suspension resolving
+  ["Amaj7 add #11", "Gmaj7 add #11", "Fmaj7 add #11", "E7#9", "Amaj7 add #11"],   # Lydian chords planing down by whole steps
+  ["Amaj7 add #11", "Cmaj7 add #11", "Amaj7#5"],                                   # to a chromatic mediant and back
+  ["A6 add 9", "F#m7 add 11", "Bm7 add 11", "E7sus4", "Asus4 add 9"],             # quartal chords down by fifths
+  ["Aadd9", "Dmaj7 add #11", "Amaj7 add #11"],                                     # a Lydian IV
+]
+
+[modal]                  # the mode section's chords and chord changes
+# Every chord of these types, on any root, whose tones all lie in the mode.
+chord_types = [
+  "7b9", "7#9", "dim7", "m7b5", "7b5", "7#5", "mM7", "m6", "7sus4", "maj7#5", "m7 add 11", "maj7 add #11",
+  "7 add #11",
+]
+optional_intervals = [7]     # as in [palette]
+# Minor thirds and tritones, where modes 2 and 6 repeat, and semitones.
+bass_step = { 0 = 1, 1 = 3, 2 = 2, 3 = 3, 4 = 1, 5 = 1, 6 = 3 }
+
+[form]
+axiom = "S"
+iterations = 1
+rules.S = [
+  { to = "A B A", weight = 3 },
+  { to = "A A B A", weight = 1 },
+]
+
+[sections.A]             # a key, low on the neck
+axiom = "FK"             # the section ends on a cadence from an altered dominant
+rules.F = [
+  { to = "FF", weight = 2 },
+  { to = "F[MF]F", weight = 1 },
+  { to = "FHF", weight = 1 },
+]
+length = [6, 10]         # bars
+harmony = "graph"
+region = "0-7"
+
+[sections.B]             # a Messiaen mode, its first degree moving by M
+axiom = "F"
+rules.F = [
+  { to = "FMF", weight = 2 },
+  { to = "F[MF]F", weight = 1 },
+  { to = "FF", weight = 1 },
+]
+length = [6, 10]
+harmony = "mode"
+region = "0-9"
+modes = { 2 = 2, 3 = 2, 6 = 1 }   # weights; the first degree is where section A ended, if playable

@@ -1,8 +1,8 @@
 # Lindenfret
 
-Generates new, playable guitar pieces in the style of Villa-Lobos's Etudes 1 and 2.
+Generates new, playable guitar pieces in the style of Villa-Lobos's Etudes 1 and 2, and studies that set one of Carulli's right-hand patterns to exotic harmony.
 
-Each piece keeps its étude's right-hand arpeggio and rhythm. An L-system generates everything else: the form, the harmony, key changes, sliding chord shapes and the ending. A fretboard model checks that every bar can be played. Nothing is copied from the original. A seed and a config file fully determine a piece, so any piece can be rebuilt exactly.
+Each piece keeps its preset's right-hand arpeggio and rhythm: an étude's own, or a study's. An L-system generates everything else: the form, the harmony, key changes, sliding chord shapes and the ending. A fretboard model checks that every bar can be played. Nothing is copied from the original. A seed and a config file fully determine a piece, so any piece can be rebuilt exactly.
 
 For how it works, see [docs/design.md](docs/design.md). For build status, see [docs/plan.md](docs/plan.md).
 
@@ -29,7 +29,7 @@ This creates `out/etude1-7/` containing:
 - `piece.musicxml`: standard notation, which opens in MuseScore.
 - `manifest.json`: the seed, config and plan used to rebuild the piece.
 
-Leave out `--seed` to pick one at random. For Etude 2, use `--config configs/etude2.toml`; its pieces go to `out/etude2-<seed>/`. For wider harmony, with added-tone chords, altered dominants and polychords, use `configs/etude1-exotic.toml` or `configs/etude2-exotic.toml`. For Messiaen's modes, use `configs/etude1-messiaen.toml`, which puts its middle section in a mode, or `configs/etude2-messiaen.toml`, which is in modes throughout.
+Leave out `--seed` to pick one at random. For Etude 2, use `--config configs/etude2.toml`; its pieces go to `out/etude2-<seed>/`. For wider harmony, with added-tone chords, altered dominants and polychords, use `configs/etude1-exotic.toml` or `configs/etude2-exotic.toml`. For Messiaen's modes, use `configs/etude1-messiaen.toml`, which puts its middle section in a mode, or `configs/etude2-messiaen.toml`, which is in modes throughout. For a study that sets Carulli's p i m p i m to quartal, Lydian and altered chords and Messiaen's modes, use `configs/carulli1.toml`.
 
 Write a batch of pieces to listen through:
 
@@ -75,7 +75,7 @@ It also answers questions about the fretboard:
 
 ## Experimenting
 
-Everything musical is set in the presets, [configs/etude1.toml](configs/etude1.toml) and [configs/etude2.toml](configs/etude2.toml): the right-hand pattern, the grammar rules, section lengths and fret regions, the chord palette and its key, key-change weights, voicing preferences and playability limits. Etude 1's pattern names a string for each note; Etude 2's is a contour that climbs a ladder of stops, several to a string. The exotic presets differ from these only in their palettes and harmony weights. Palette chords are chord symbols such as `F#m7b5/E` or `Emaj7 add #11`, or polychords such as `D|C`, D major over C major. A section with `harmony = "mode"` instead draws on Messiaen's modes, using every chord of the `[modal] chord_types` that fits the mode; a preset whose sections are all in modes needs no palette. To try a variation, copy the preset under a new name, or change it on a branch. The config is checked when it loads, so a mistake fails with a message naming the key.
+Everything musical is set in the presets, [configs/etude1.toml](configs/etude1.toml) and [configs/etude2.toml](configs/etude2.toml): the right-hand pattern, the grammar rules, section lengths and fret regions, the chord palette and its key, key-change weights, voicing preferences and playability limits. Etude 1's pattern names a string for each note; Etude 2's is a contour that climbs a ladder of stops, several to a string. A string pattern may also play `"bass"`, the chord's bass on whichever of its `bass_strings` holds it, as the study's thumb does. The exotic presets differ from these only in their palettes and harmony weights. Palette chords are chord symbols such as `F#m7b5/E` or `Emaj7 add #11`, or polychords such as `D|C`, D major over C major. A section with `harmony = "mode"` instead draws on Messiaen's modes, using every chord of the `[modal] chord_types` that fits the mode; a preset whose sections are all in modes needs no palette. To try a variation, copy the preset under a new name, or change it on a branch. The config is checked when it loads, so a mistake fails with a message naming the key.
 
 Record the pieces worth practicing in [curated.toml](curated.toml), with each piece's seed and config hash.
 

@@ -7,10 +7,11 @@ as how long notes ring, is written at the start.
 
 from __future__ import annotations
 
+from bisect import bisect_right
 from collections.abc import Sequence
-from itertools import product
+from itertools import accumulate, product
 
-from music21 import clef, expressions, instrument, metadata, meter, note, pitch, stream, tempo
+from music21 import clef, duration, expressions, instrument, metadata, meter, note, pitch, stream, tempo
 
 from lindenfret.config import Config
 from lindenfret.render import Rendering
@@ -22,13 +23,15 @@ def build_score(rendering: Rendering, config: Config, title: str) -> stream.Scor
     part = stream.Part()
     part.partName = "Guitar"
     part.insert(0, instrument.Guitar())
+    beat = config.meter.beat_quarters
 
     for m in rendering.measures:
         measure = stream.Measure(number=m.number)
         if m.number == 1:
             measure.insert(0, clef.Treble8vbClef())
             measure.insert(0, meter.TimeSignature(f"{config.meter.beats}/{config.meter.beat_unit}"))
-            measure.insert(0, tempo.MetronomeMark(number=config.meter.tempo, referent=note.Note(type="quarter")))
+            metronome = tempo.MetronomeMark(number=round(config.meter.tempo / beat), referent=duration.Duration(beat))
+            measure.insert(0, metronome)
             if config.notation.direction:
                 measure.insert(0, expressions.TextExpression(config.notation.direction))
         for mark in m.marks:
@@ -40,23 +43,24 @@ def build_score(rendering: Rendering, config: Config, title: str) -> stream.Scor
             w.quarterLength = rendering.note_quarters
             measure.insert(n.onset - m.start, w)
             written.append((n.onset - m.start, w))
-        _beam_by_beat(written)
+        _beam_in_groups(written, config.meter.beam_groups)
         part.append(measure)
 
     score.append(part)
     return score
 
 
-def _beam_by_beat(notes: list[tuple[float, note.Note]]) -> None:
-    """Beam each beat's notes as one group with unbroken beams.
+def _beam_in_groups(notes: list[tuple[float, note.Note]], groups: Sequence[float]) -> None:
+    """Beam the notes of each group, `groups` quarter notes long, together with unbroken beams.
 
-    music21's default for 4/4 splits the 16th beam into pairs, which reads
-    as eighth-note subgroups; the pattern is a continuous run of 16ths.
+    music21's default for 4/4 splits a beat of 16ths into pairs, which reads
+    as eighth-note subgroups.
     """
-    beats: dict[int, list[note.Note]] = {}
+    ends = list(accumulate(groups))
+    beamed: dict[int, list[note.Note]] = {}
     for offset, n in sorted(notes, key=lambda x: x[0]):
-        beats.setdefault(int(offset), []).append(n)
-    for group in beats.values():
+        beamed.setdefault(bisect_right(ends, offset), []).append(n)
+    for group in beamed.values():
         if len(group) < 2:
             continue
         for i, n in enumerate(group):

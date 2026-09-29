@@ -1,8 +1,9 @@
 """Fingerings on the fretboard: enumerate, check, score and choose.
 
 For a string pattern, a fingering gives every string a fret: 0 for open, or
-None for muted, which is allowed only on strings the right-hand pattern never
-plays. For a contour pattern, the voicer uses ladders instead (ladder.py).
+None for muted. The strings the pattern plucks sound and the rest are muted,
+except that a "bass" note sounds on exactly one of its bass strings. For a
+contour pattern, the voicer uses ladders instead (ladder.py).
 Either way it lists every fingering for a chord in a fret region, keeps those
 that pass the hard rules, ranks them by a soft score and samples among the
 best.
@@ -15,7 +16,7 @@ from __future__ import annotations
 
 import math
 import random
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import NamedTuple
 
@@ -85,7 +86,7 @@ class NoFingering(ValueError):
 
 
 def enumerate_fingerings(
-    spec: ChordSpec, region: Region, fretboard: Fretboard, pattern_strings: Collection[int]
+    spec: ChordSpec, region: Region, fretboard: Fretboard, pattern: Pattern
 ) -> tuple[Fingering, ...]:
     """Every fingering of `spec` within `region` that passes the hard rules."""
     low_fret, high_fret = region[0], min(region[1], fretboard.max_fret)
@@ -93,10 +94,13 @@ def enumerate_fingerings(
     options: list[list[int | None]] = []
     for index, open_pitch in enumerate(fretboard.open_midi):
         string = count - index
+        if string not in pattern.plucked and string not in pattern.bass_strings:
+            options.append([None])
+            continue
         allowed = spec.pitch_classes
         if string in fretboard.tension_strings:
             allowed = allowed | spec.tensions
-        choices: list[int | None] = [] if string in pattern_strings else [None]
+        choices: list[int | None] = [None] if string in pattern.bass_strings else []
         if open_pitch % 12 in allowed:
             choices.append(0)
         choices += [
@@ -109,7 +113,7 @@ def enumerate_fingerings(
     def walk(index: int, frets: list[int | None], lowest: int, highest: int) -> None:
         if index == count:
             fingering = Fingering.from_frets(frets, fretboard)
-            if _complete(fingering, spec, fretboard):
+            if _complete(fingering, spec, fretboard, pattern):
                 found.append(fingering)
             return
         for fret in options[index]:
@@ -126,10 +130,15 @@ def enumerate_fingerings(
     return tuple(found)
 
 
-def _complete(fingering: Fingering, spec: ChordSpec, fretboard: Fretboard) -> bool:
+def _complete(fingering: Fingering, spec: ChordSpec, fretboard: Fretboard, pattern: Pattern) -> bool:
     sounding = fingering.sounding
     if not sounding:
         return False
+    if pattern.bass_strings:
+        count = fretboard.string_count
+        bass = [fingering.pitches[count - s] for s in pattern.bass_strings if fingering.frets[count - s] is not None]
+        if len(bass) != 1 or bass[0] != min(sounding):
+            return False
     if not spec.required <= {p % 12 for p in sounding}:
         return False
     if min(sounding) % 12 != spec.bass:
@@ -154,7 +163,7 @@ def check_fingering(
     fingering: Fingering,
     spec: ChordSpec | None,
     fretboard: Fretboard,
-    pattern_strings: Collection[int],
+    pattern: Pattern,
     region: Region | None = None,
 ) -> list[str]:
     """Every hard rule `fingering` breaks, as readable messages; empty if none.
@@ -168,9 +177,11 @@ def check_fingering(
     for index, (fret, midi) in enumerate(zip(fingering.frets, fingering.pitches)):
         string = count - index
         if fret is None:
-            if string in pattern_strings:
+            if string in pattern.plucked:
                 problems.append(f"string {string} is muted but the pattern plays it")
             continue
+        if string not in pattern.plucked and string not in pattern.bass_strings:
+            problems.append(f"string {string} sounds but the pattern never plays it")
         if not 0 <= fret <= fretboard.max_fret:
             problems.append(f"string {string} fret {fret} is outside frets 0-{fretboard.max_fret}")
         if fret and region is not None and not region[0] <= fret <= region[1]:
@@ -193,6 +204,13 @@ def check_fingering(
         problems.append(f"needs {fingers_needed(fingering)} fingers")
 
     sounding = [p for p in fingering.pitches if p is not None]
+    if pattern.bass_strings:
+        bass = [s for s in pattern.bass_strings if fingering.frets[count - s] is not None]
+        if len(bass) != 1:
+            strings = ", ".join(map(str, pattern.bass_strings))
+            problems.append(f"the bass sounds on {len(bass)} of strings {strings}, not one")
+        elif fingering.pitches[count - bass[0]] != min(sounding):
+            problems.append(f"string {bass[0]} plays the bass note but isn't the lowest")
     if not sounding:
         problems.append("no string sounds")
     elif spec is not None:
@@ -265,7 +283,6 @@ class Voicer:
     def __init__(self, fretboard: Fretboard, pattern: Pattern, settings: VoicerSettings) -> None:
         self.fretboard = fretboard
         self.pattern = pattern
-        self.pattern_strings = frozenset(pattern.strings)
         self.settings = settings
         self._cache: dict[tuple[ChordSpec, Region], tuple[Voicing, ...]] = {}
         self._playable: dict[tuple[ChordSpec, Region], bool] = {}
@@ -276,7 +293,7 @@ class Voicer:
             if self.pattern.contour:
                 found = enumerate_ladders(spec, region, self.fretboard, self.pattern)
             else:
-                found = enumerate_fingerings(spec, region, self.fretboard, self.pattern_strings)
+                found = enumerate_fingerings(spec, region, self.fretboard, self.pattern)
             self._cache[cache_key] = found
         return self._cache[cache_key]
 
@@ -295,7 +312,7 @@ class Voicer:
         """The independent check of the hard rules for this pattern."""
         if self.pattern.contour:
             return check_ladder(fingering, spec, self.fretboard, self.pattern, region)
-        return check_fingering(fingering, spec, self.fretboard, self.pattern_strings, region)
+        return check_fingering(fingering, spec, self.fretboard, self.pattern, region)
 
     def ranked(
         self, spec: ChordSpec, region: Region, previous: Voicing | None = None

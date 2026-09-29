@@ -35,6 +35,7 @@ SHAPE_TYPES = ("dim7", "augmented", "any")
 VOICER_WEIGHTS = ("movement", "span", "open_strings", "doubling")
 CONTOUR_WEIGHTS = ("shift",)  # voicer weights that only a contour pattern needs
 NOTE_VALUES = {"32nd": 0.125, "16th": 0.25, "8th": 0.5, "quarter": 1.0}
+BASS = 0  # in a string pattern, the bass note: "bass" in the config, plucked on one of bass_strings
 PLANING_FORBIDDEN = frozenset("MK")  # planing has no center to move or cadence to
 MODE_FORBIDDEN = frozenset("K")  # a mode has no dominant to cadence from
 SECTION_TABLES = {"graph": ("palette", "graph"), "mode": ("modal",)}  # what each kind of section needs
@@ -72,13 +73,37 @@ class Notation:
 class Meter:
     beats: int
     beat_unit: int
-    tempo: float
+    tempo: float  # quarter notes per minute
     repeat_bars: int
-    ritardando: float  # how much slower the last bar pair of a section ends, e.g. 0.1
+    ritardando: float  # how much slower a section's last bar ends, repeats included, e.g. 0.1
 
     @property
     def bar_quarters(self) -> float:
         return self.beats * 4 / self.beat_unit
+
+    @property
+    def beat_quarters(self) -> float:
+        """The beat a tempo mark counts: a dotted quarter in 3/8, 6/8, 9/8 or 12/8, else the time signature's note."""
+        note = 4 / self.beat_unit
+        return 3 * note if self.beat_unit >= 8 and self.beats % 3 == 0 else note
+
+    @property
+    def beam_groups(self) -> tuple[float, ...]:
+        """The bar's beamed groups in quarter notes.
+
+        Eighths and 16ths group in threes when the count allows, as in 6/8, and
+        otherwise in twos closing with a three if the count is odd: 7/8 is
+        2 + 2 + 3 eighths. Longer notes group by the quarter.
+        """
+        if self.beat_unit < 8:
+            return (1.0,) * int(self.bar_quarters)
+        if self.beats % 3 == 0:
+            counts = [3] * (self.beats // 3)
+        elif self.beats == 1:
+            counts = [1]
+        else:
+            counts = [2] * (self.beats // 2 - self.beats % 2) + [3] * (self.beats % 2)
+        return tuple(c * 4 / self.beat_unit for c in counts)
 
 
 @dataclass(frozen=True)
@@ -111,11 +136,13 @@ class Pattern:
     """The right hand's notes in one bar, as a string pattern or a contour.
 
     A string pattern names the string each note plucks, and the left hand
-    holds one fret per string. A contour names the stop each note plays,
-    counting up the bar's ladder of stops from 0; see ladder.py.
+    holds one fret per string. It may also play BASS, the bar's bass note,
+    on whichever of `bass_strings` the fingering puts it. A contour names the
+    stop each note plays, counting up the bar's ladder of stops from 0; see
+    ladder.py.
     """
 
-    strings: tuple[int, ...]  # the string each note plucks; empty for a contour
+    strings: tuple[int, ...]  # the string each note plucks, or BASS; empty for a contour
     contour: tuple[int, ...]  # the stop each note plays; empty for a string pattern
     note: str
     note_quarters: float
@@ -123,6 +150,12 @@ class Pattern:
     notes_per_string: int  # stops one string may carry; 1 for a string pattern
     hand_positions: int  # hand positions one bar may use; 1 for a string pattern
     max_slide: int  # frets the hand may slide to reach a new position; 0 for a string pattern
+    bass_strings: tuple[int, ...] = ()  # the strings BASS may pluck, each below every other pattern string
+
+    @property
+    def plucked(self) -> frozenset[int]:
+        """The strings every bar plucks, leaving out BASS, whose string varies."""
+        return frozenset(self.strings) - {BASS}
 
     @property
     def stops(self) -> int:
@@ -242,6 +275,8 @@ def parse_config(data: Mapping[str, Any]) -> Config:
         where = f"sections.{section.name}"
         if section.harmony == "planing" and pattern.contour:
             raise ConfigError(f"{where}: planing needs a string pattern, not a contour")
+        if section.harmony == "planing" and pattern.bass_strings:
+            raise ConfigError(f'{where}: planing needs fixed strings, not a "bass" note')
         for table in SECTION_TABLES.get(section.harmony, ()):
             if table not in data:
                 raise ConfigError(f"{where}: a {section.harmony} section needs a [{table}] table")
@@ -375,14 +410,26 @@ def _parse_pattern(value: Any, meter: Meter, fretboard: Fretboard) -> Pattern:
         raise ConfigError("pattern: needs exactly one of strings or contour")
     kind = "strings" if "strings" in t else "contour"
     contour_keys = {"notes_per_string", "hand_positions", "max_slide"} if kind == "contour" else set()
-    _check_keys(t, required={kind, "note", "velocities"} | contour_keys, where="pattern")
-    notes = tuple(_as_int(n, f"pattern.{kind}") for n in _as_list(t[kind], f"pattern.{kind}"))
+    _check_keys(
+        t,
+        required={kind, "note", "velocities"} | contour_keys,
+        where="pattern",
+        optional={"bass_strings"} if kind == "strings" else set(),
+    )
+    raw = _as_list(t[kind], f"pattern.{kind}")
+    if kind == "strings":
+        if any(isinstance(n, str) and n != "bass" for n in raw):
+            raise ConfigError('pattern.strings: expected string numbers or "bass"')
+        numbered = [_as_int(n, "pattern.strings") for n in raw if n != "bass"]
+        _check_strings(numbered, fretboard.string_count, "pattern.strings")
+    notes = tuple(BASS if kind == "strings" and n == "bass" else _as_int(n, f"pattern.{kind}") for n in raw)
     if not notes:
         raise ConfigError(f"pattern.{kind}: must not be empty")
     notes_per_string = hand_positions = 1
     max_slide = 0
+    bass_strings: tuple[int, ...] = ()
     if kind == "strings":
-        _check_strings(notes, fretboard.string_count, "pattern.strings")
+        bass_strings = _parse_bass_strings(t, notes, fretboard)
     else:
         if set(notes) != set(range(max(notes) + 1)):
             raise ConfigError("pattern.contour: must use every stop from 0 up to its highest")
@@ -416,8 +463,29 @@ def _parse_pattern(value: Any, meter: Meter, fretboard: Fretboard) -> Pattern:
         raise ConfigError("pattern.velocities: each must be between 1 and 127")
     strings, contour = (notes, ()) if kind == "strings" else ((), notes)
     return Pattern(
-        strings, contour, note, note_quarters, velocities, notes_per_string, hand_positions, max_slide
+        strings, contour, note, note_quarters, velocities, notes_per_string, hand_positions, max_slide,
+        bass_strings,
     )
+
+
+def _parse_bass_strings(t: Mapping[str, Any], strings: Sequence[int], fretboard: Fretboard) -> tuple[int, ...]:
+    where = "pattern.bass_strings"
+    if BASS not in strings:
+        if "bass_strings" in t:
+            raise ConfigError(f'{where}: only a pattern with a "bass" note uses them')
+        return ()
+    if "bass_strings" not in t:
+        raise ConfigError('pattern: a "bass" note needs bass_strings, the strings it may pluck')
+    bass_strings = tuple(_as_int(s, where) for s in _as_list(t["bass_strings"], where))
+    if not bass_strings:
+        raise ConfigError(f"{where}: must not be empty")
+    _check_strings(bass_strings, fretboard.string_count, where)
+    if len(set(bass_strings)) != len(bass_strings):
+        raise ConfigError(f"{where}: repeated strings")
+    plucked = set(strings) - {BASS}
+    if plucked and min(bass_strings) <= max(plucked):
+        raise ConfigError(f"{where}: string {min(bass_strings)} isn't below the pattern's string {max(plucked)}")
+    return bass_strings
 
 
 def _parse_centers(value: Any) -> Centers:

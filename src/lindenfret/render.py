@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from lindenfret.chords import ChordSpec
-from lindenfret.config import Config, Pattern
+from lindenfret.config import BASS, Config, Meter, Pattern
 from lindenfret.fretboard import Fingering, Voicing
 from lindenfret.harmony import Bar
 from lindenfret.ladder import Ladder
@@ -65,12 +65,14 @@ def _render_strings(
 ) -> list[NoteEvent]:
     count = len(fingering.frets)
     step = pattern.note_quarters
+    bass = [s for s in pattern.bass_strings if fingering.frets[count - s] is not None]
+    strings = [bass[0] if s == BASS else s for s in pattern.strings]
     notes = []
-    for k, (string, velocity) in enumerate(zip(pattern.strings, pattern.velocities)):
+    for k, (string, velocity) in enumerate(zip(strings, pattern.velocities)):
         fret, midi = fingering.frets[count - string], fingering.pitches[count - string]
         if fret is None or midi is None:
             continue
-        later = [j for j in range(k + 1, len(pattern.strings)) if pattern.strings[j] == string]
+        later = [j for j in range(k + 1, len(strings)) if strings[j] == string]
         end = later[0] * step if later else bar_quarters
         name = spec.spell(midi) if spec else _plain_name(midi)
         notes.append(NoteEvent(start + k * step, end - k * step, string, fret, midi, velocity, name))
@@ -119,16 +121,21 @@ def render_piece(piece: Piece, config: Config) -> Rendering:
                 marks.append("a tempo")
                 slowing = False
             if i in last_of_section and repeat == 0 and slowdown > 0:
-                beats = int(bar_quarters * repeats)
-                tempos += [
-                    (start + beat, round(tempo * (1 - slowdown * (beat + 1) / beats), 3))
-                    for beat in range(beats)
-                ]
+                tempos += ritardando(start, config.meter)
                 marks.append("rit.")
                 slowing = True
             notes = render_bar(bar.fingering, bar.chord, config.pattern, start, bar_quarters)
             measures.append(Measure(len(measures) + 1, start, bar, tuple(notes), tuple(marks)))
     return Rendering(tuple(measures), tuple(tempos), bar_quarters, config.pattern.note_quarters)
+
+
+def ritardando(start: float, meter: Meter) -> list[tuple[float, float]]:
+    """The tempo map of a section's last bar and its repeats, from `start`, slowing a step at a time."""
+    step = min(1.0, 4 / meter.beat_unit)  # a quarter, or an eighth in 6/8
+    steps = round(meter.bar_quarters * meter.repeat_bars / step)
+    return [
+        (start + k * step, round(meter.tempo * (1 - meter.ritardando * (k + 1) / steps), 3)) for k in range(steps)
+    ]
 
 
 _PLAIN_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"]

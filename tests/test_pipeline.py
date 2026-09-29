@@ -66,7 +66,7 @@ def test_every_fingering_passes_the_independent_check(pieces):
         for bar in piece.bars:
             assert bar.fingering is not None
             problems = check_fingering(
-                bar.fingering, bar.chord, CONFIG.fretboard, CONFIG.pattern.strings, bar.region
+                bar.fingering, bar.chord, CONFIG.fretboard, CONFIG.pattern, bar.region
             )
             assert problems == [], (piece.seed, bar.role, problems)
 

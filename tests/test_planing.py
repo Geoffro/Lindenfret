@@ -46,7 +46,7 @@ def test_the_slide_follows_the_offsets_and_passes_the_hard_rules(seed):
     planed = plane(planing_bars(offsets), SECTION, CONFIG, random.Random(seed))
     shapes = set()
     for bar, offset in zip(planed, offsets):
-        assert check_fingering(bar.fingering, None, FRETBOARD, CONFIG.pattern.strings, SECTION.region) == []
+        assert check_fingering(bar.fingering, None, FRETBOARD, CONFIG.pattern, SECTION.region) == []
         assert bar.fingering.span <= CONFIG.voicer.comfortable_span
         assert bar.shape in SECTION.shape_types
         assert not bar.note
@@ -77,7 +77,7 @@ def test_a_slide_longer_than_the_region_stops_at_the_edge(region):
         planed = plane(planing_bars(range(0, -20, -1)), section, CONFIG, random.Random(seed))
         assert any("no room to slide" in b.note for b in planed)
         for bar in planed:
-            assert check_fingering(bar.fingering, None, FRETBOARD, CONFIG.pattern.strings, region) == []
+            assert check_fingering(bar.fingering, None, FRETBOARD, CONFIG.pattern, region) == []
 
 
 def test_an_empty_section_plans_nothing():

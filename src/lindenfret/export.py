@@ -22,6 +22,7 @@ from lindenfret.render import Rendering, render_piece
 from lindenfret.score import build_score
 
 TICKS_PER_QUARTER = 480
+MIDI_CLOCKS_PER_QUARTER = 24  # fixed by the MIDI standard; a time signature counts its click in these
 GUITAR_PROGRAM = 24  # General MIDI "Acoustic Guitar (nylon)", numbered from 0
 MIDI_FILE, MUSICXML_FILE, MANIFEST_FILE = "piece.mid", "piece.musicxml", "manifest.json"
 
@@ -54,8 +55,12 @@ def write_midi(rendering: Rendering, config: Config, path: Path) -> None:
     midi = mido.MidiFile(type=1, ticks_per_beat=TICKS_PER_QUARTER)
     conductor = mido.MidiTrack()
     conductor.append(mido.MetaMessage("track_name", name="tempo", time=0))
+    meter = config.meter
+    click = round(MIDI_CLOCKS_PER_QUARTER * meter.beat_quarters)  # the metronome clicks on the beat
     conductor.append(
-        mido.MetaMessage("time_signature", numerator=config.meter.beats, denominator=config.meter.beat_unit, time=0)
+        mido.MetaMessage(
+            "time_signature", numerator=meter.beats, denominator=meter.beat_unit, clocks_per_click=click, time=0
+        )
     )
     conductor += _delta(
         [(_ticks(onset), 0, mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(bpm))) for onset, bpm in rendering.tempos]

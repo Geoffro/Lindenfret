@@ -22,7 +22,7 @@ from lindenfret.report import unplayable_chords
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONFIG = load_config(PRESET)
 FRETBOARD = CONFIG.fretboard
-PATTERN = CONFIG.pattern.strings
+PATTERN = CONFIG.pattern
 TABLE = build_chord_table(CONFIG.palette)
 NECK = (0, FRETBOARD.max_fret)
 
@@ -109,6 +109,51 @@ def test_every_palette_chord_is_playable_somewhere():
     # with the Gb bass at fret 2 on string 6, which takes five fingers. The
     # harmony stage routes around it; any new entry here is a regression.
     assert unplayable_chords(voicer(), TABLE) == ["Ebm/Gb in Eb minor"]
+
+
+BASS_CONFIG = load_config(PRESET.with_name("carulli1.toml"))  # the bass, then strings 2 1 3 2 1
+
+
+def sounding_strings(f):
+    return {len(f.frets) - i for i, fret in enumerate(f.frets) if fret is not None}
+
+
+@pytest.mark.parametrize("symbol, string", [("E7/G#", 6), ("Am", 5), ("Dm7", 4)])
+def test_a_bass_note_sounds_on_whichever_bass_string_holds_it(symbol, string):
+    # In frets 0-4, G# is only on string 6, A only on string 5 and D only on string 4.
+    found = enumerate_fingerings(parse_chord(symbol), (0, 4), BASS_CONFIG.fretboard, BASS_CONFIG.pattern)
+    assert found and all(sounding_strings(f) == {string, 3, 2, 1} for f in found)
+
+
+@pytest.mark.parametrize(
+    "symbol, frets, bass_strings, problem",
+    [
+        ("Am", (None, 0, 2, 2, 1, 0), (6, 5, 4), "the bass sounds on 2 of strings 6, 5, 4, not one"),
+        ("Am", (None, None, None, 2, 1, 0), (6, 5, 4), "the bass sounds on 0 of strings 6, 5, 4, not one"),
+        ("Am", (None, 0, 2, 2, 1, 0), (6, 5), "string 4 sounds but the pattern never plays it"),
+        # B3 on string 4 above the open G string's G3, the chord's real bass
+        ("G7#9", (None, None, 9, 0, 6, 6), (6, 5, 4), "string 4 plays the bass note but isn't the lowest"),
+    ],
+)
+def test_check_names_each_broken_bass_rule(symbol, frets, bass_strings, problem):
+    pattern = dataclasses.replace(BASS_CONFIG.pattern, bass_strings=bass_strings)
+    problems = check_fingering(fingering(*frets), parse_chord(symbol), BASS_CONFIG.fretboard, pattern, NECK)
+    assert problem in problems, problems
+
+
+def test_a_bass_string_above_the_lowest_note_is_not_enumerated():
+    found = enumerate_fingerings(parse_chord("G7#9"), NECK, BASS_CONFIG.fretboard, BASS_CONFIG.pattern)
+    assert found and fingering(None, None, 9, 0, 6, 6) not in found
+
+
+def test_every_bass_pattern_fingering_passes_the_independent_check():
+    fretboard, pattern = BASS_CONFIG.fretboard, BASS_CONFIG.pattern
+    table = build_chord_table(BASS_CONFIG.palette)
+    for specs in table.chords.values():
+        for spec in specs:
+            for region in [(0, 5), (0, fretboard.max_fret)]:
+                for f in enumerate_fingerings(spec, region, fretboard, pattern):
+                    assert check_fingering(f, spec, fretboard, pattern, region) == [], (spec.symbol, f.tab())
 
 
 def test_choose_is_deterministic_for_a_stream():

@@ -2,7 +2,7 @@
 
 Design: [design.md](design.md)
 
-Eight phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDIs, as summarized in the design: the pattern, rhythm, form, palette, planing idiom and left-hand limits. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
+Nine phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDIs, as summarized in the design: the pattern, rhythm, form, palette, planing idiom and left-hand limits. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
 
 | Phase | Scope | Exit gate |
 | --- | --- | --- |
@@ -14,6 +14,7 @@ Eight phases, built in order. Each ends in a gate you can check from the command
 | 5. Etude 2 | Preset-level palette key, optional tones and notation; contour patterns over ladders of stops; Etude 2 reference analysis and preset | Etude 1's plans are unchanged apart from its preset hash, every Etude 2 reference bar is playable under its preset, and a listening pass over 20 Etude 2 seeds finds variants worth practicing |
 | 6. Exotic harmony | Polychord symbols; an exotic preset for each étude, with a wider palette and harmony weights | Every added chord is playable in every center, and a listening pass over 20 seeds of each finds variants worth practicing |
 | 7. Messiaen's modes | Mode sections with chords generated from chord types; an Etude 1 preset with a mode section in place of planing, and an Etude 2 preset in modes throughout | The tonal presets' plans are unchanged, and a listening pass over 20 seeds finds variants worth practicing |
+| 8. Carulli-style studies | A `"bass"` note in string patterns that plucks whichever bass string holds the chord's bass; x/8 meters beamed and counted by their beat; a first study, p i m p i m | The other presets' plans are unchanged, every study chord is playable in every center, and a listening pass over 20 seeds finds studies worth practicing |
 
 ## Phase 0: Foundation
 
@@ -86,3 +87,10 @@ Eight phases, built in order. Each ends in a gate you can check from the command
 - [x] `configs/etude2-messiaen.toml`: etude2.toml with every section in a mode: A in modes 2 and 3, B travelling through 3 and 7, C in 2 and 6.
 - [x] Batches of 20 generated: `lindenfret batch --config configs/etude1-messiaen.toml --count 20 --first-seed 1`, and the same for `etude2-messiaen.toml`, wrote `out/etude1-messiaen-1` to `-20` and `out/etude2-messiaen-1` to `-20`.
 - [ ] Listen to both batches, tune `chord_types` and the mode weights by ear, and record keepers in `curated.toml`.
+
+## Phase 8: Carulli-style studies
+
+- [x] `"bass"` in a string pattern plucks the chord's bass on whichever of `[pattern] bass_strings` holds it; strings the pattern never plucks are muted.
+- [x] x/8 meters are beamed and counted by their beat: dotted quarters in 6/8, 2 + 2 + 3 eighths in 7/8. The tempo mark, MIDI click and ritardando follow.
+- [x] `configs/carulli1.toml`: p i m p i m in 6/8, the thumb on the bass and then the G string. Graph sections use quartal, Lydian, Dorian and altered chords, with no plain triads or sevenths; the middle section is in Messiaen's modes 2, 3 and 6.
+- [ ] Generate a batch of 20, tune the palette, form and accents by ear, and record keepers in `curated.toml`.

@@ -2,11 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from lindenfret.chords import build_chord_table
-from lindenfret.config import load_config
+from lindenfret.chords import build_chord_table, parse_chord
+from lindenfret.config import Meter, load_config
 from lindenfret.fretboard import Fingering, Voicer
 from lindenfret.pipeline import plan_piece
-from lindenfret.render import render_bar, render_piece
+from lindenfret.render import render_bar, render_piece, ritardando
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG = load_config(ROOT / "configs" / "etude1.toml")
@@ -48,7 +48,7 @@ def test_planing_bars_play_the_pattern_over_their_shape(rendering):
     assert planing and all(len(m.notes) == len(CONFIG.pattern.strings) for m in planing)
 
 
-def test_ritardando_over_each_sections_last_bar_pair(rendering):
+def test_ritardando_over_each_sections_last_bar_and_its_repeat(rendering):
     tempo = CONFIG.meter.tempo
     rits = [m for m in rendering.measures if "rit." in m.marks]
     assert len(rits) == len({m.bar.section for m in rendering.measures})
@@ -59,6 +59,35 @@ def test_ritardando_over_each_sections_last_bar_pair(rendering):
     for m in rendering.measures:
         if "a tempo" in m.marks:
             assert (m.start, tempo) in rendering.tempos
+
+
+@pytest.mark.parametrize(
+    "time_signature, repeats, onsets",
+    [
+        ("4/4", 2, [0, 1, 2, 3, 4, 5, 6, 7]),
+        ("2/2", 1, [0, 1, 2, 3]),
+        ("3/8", 1, [0, 0.5, 1]),
+        ("5/8", 1, [0, 0.5, 1, 1.5, 2]),
+        ("6/8", 1, [0, 0.5, 1, 1.5, 2, 2.5]),
+    ],
+)
+def test_a_ritardando_slows_through_the_whole_bar(time_signature, repeats, onsets):
+    beats, unit = map(int, time_signature.split("/"))
+    ramp = ritardando(10.0, Meter(beats, unit, 100.0, repeats, 0.2))
+    assert [onset - 10.0 for onset, _ in ramp] == onsets
+    bpms = [bpm for _, bpm in ramp]
+    assert bpms == sorted(bpms, reverse=True) and bpms[0] < 100 and bpms[-1] == pytest.approx(80)
+
+
+@pytest.mark.parametrize(
+    "symbol, frets, bass", [("E7/G#", (4, None, None, 4, 3, 0), 6), ("Am", (None, 0, None, 2, 1, 0), 5)]
+)
+def test_a_bass_note_plays_on_the_fingerings_bass_string(symbol, frets, bass):
+    config = load_config(ROOT / "configs" / "carulli1.toml")  # 6/8: the bass, then strings 2 1 3 2 1 in 8ths
+    fingering = Fingering.from_frets(frets, config.fretboard)
+    notes = render_bar(fingering, parse_chord(symbol), config.pattern, 0.0, config.meter.bar_quarters)
+    assert [n.string for n in notes] == [bass, 2, 1, 3, 2, 1]
+    assert [n.duration for n in notes] == [3.0, 1.5, 1.5, 1.5, 1.0, 0.5]  # each rings until plucked again
 
 
 def test_the_references_fingerings_render_to_the_reference(etude1_facts):

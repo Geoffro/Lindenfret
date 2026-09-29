@@ -4,10 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from lindenfret.config import ConfigError, load_config, note_to_midi, parse_config, pitch_class
+from lindenfret.config import BASS, ConfigError, Meter, load_config, note_to_midi, parse_config, pitch_class
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONTOUR_PRESET = PRESET.with_name("etude2.toml")
+BASS_PRESET = PRESET.with_name("carulli1.toml")
 MODE_PRESET = PRESET.with_name("etude1-messiaen.toml")
 ALL_MODE_PRESET = PRESET.with_name("etude2-messiaen.toml")
 
@@ -43,6 +44,35 @@ def test_other_fills_unnamed_centers():
     start = load_config(PRESET).centers.start
     assert start[pitch_class("E")] == 3
     assert start[pitch_class("C")] == 1  # "other"
+
+
+@pytest.mark.parametrize(
+    "time_signature, beat, groups",
+    [
+        ("4/4", 1.0, (1.0,) * 4),
+        ("2/2", 2.0, (1.0,) * 4),
+        ("3/8", 1.5, (1.5,)),
+        ("6/8", 1.5, (1.5, 1.5)),
+        ("12/8", 1.5, (1.5,) * 4),
+        ("1/8", 0.5, (0.5,)),
+        ("2/8", 0.5, (1.0,)),
+        ("4/8", 0.5, (1.0, 1.0)),
+        ("5/8", 0.5, (1.0, 1.5)),
+        ("7/8", 0.5, (1.0, 1.0, 1.5)),
+        ("6/16", 0.75, (0.75, 0.75)),
+    ],
+)
+def test_a_meter_knows_its_beat_and_beaming(time_signature, beat, groups):
+    beats, unit = map(int, time_signature.split("/"))
+    meter = Meter(beats, unit, 120.0, 1, 0.1)
+    assert meter.beat_quarters == beat and meter.beam_groups == groups
+
+
+@pytest.mark.parametrize("unit", [1, 2, 4, 8, 16])
+def test_beam_groups_fill_the_bar(unit):
+    for beats in range(1, 17):
+        meter = Meter(beats, unit, 120.0, 1, 0.1)
+        assert sum(meter.beam_groups) == meter.bar_quarters, f"{beats}/{unit}"
 
 
 def test_note_names():
@@ -128,6 +158,38 @@ def test_the_contour_preset_loads():
 def test_bad_contour_configs_name_the_problem(edit, message):
     with pytest.raises(ConfigError, match=message):
         parse_with(load(CONTOUR_PRESET), edit)
+
+
+def test_the_bass_preset_loads():
+    pattern = load_config(BASS_PRESET).pattern
+    assert pattern.strings == (BASS, 2, 1, 3, 2, 1) and pattern.bass_strings == (6, 5, 4)
+    assert pattern.plucked == {3, 2, 1}
+    assert load_config(PRESET).pattern.bass_strings == ()
+
+
+@pytest.mark.parametrize(
+    "edit, message",
+    [
+        (lambda d: d["pattern"].pop("bass_strings"), 'a "bass" note needs bass_strings'),
+        (lambda d: d["pattern"]["strings"].__setitem__(0, 5), 'only a pattern with a "bass" note uses them'),
+        (lambda d: d["pattern"]["strings"].__setitem__(0, "p"), 'expected string numbers or "bass"'),
+        (lambda d: d["pattern"]["strings"].__setitem__(1, 0), "pattern.strings: strings are numbered 1 to 6"),
+        (lambda d: d["pattern"].update(bass_strings=[]), "bass_strings: must not be empty"),
+        (lambda d: d["pattern"].update(bass_strings=[7]), "strings are numbered 1 to 6"),
+        (lambda d: d["pattern"].update(bass_strings=[6, 6]), "repeated strings"),
+        (lambda d: d["pattern"].update(bass_strings=[6, 2]), "string 2 isn't below the pattern's string 3"),
+        (
+            lambda d: d["sections"]["A"].update(
+                harmony="planing", axiom="F", rules={"F": [{"to": "F-F", "weight": 1}]}, shape_types={"any": 1},
+                open_strings=2,
+            ),
+            'planing needs fixed strings, not a "bass" note',
+        ),
+    ],
+)
+def test_bad_bass_patterns_name_the_problem(edit, message):
+    with pytest.raises(ConfigError, match=message):
+        parse_with(load(BASS_PRESET), edit)
 
 
 def test_the_mode_preset_loads():
