@@ -32,7 +32,7 @@ def pieces():
 def test_the_palette_is_written_in_A():
     assert [s.symbol for s in TABLE.chords[("major", A)]] == list(CONFIG.palette.major)
     assert TABLE.written_in == "A"
-    graph = ChordGraph(TABLE, CONFIG.graph, CONFIG.palette)
+    graph = ChordGraph(TABLE, CONFIG)
     major = CONFIG.palette.major
     assert {major[i] for i in graph.tonics["major"]} == {"A", "AM9/G#"}
     assert {major[i] for i in graph.dominants["major"]} == {"E7/B", "E9/B", "E/B", "E9"}

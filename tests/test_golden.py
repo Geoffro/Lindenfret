@@ -22,7 +22,7 @@ UNSTABLE = {"generator", "git_commit", "config"}  # config_sha256 stands in for 
     "preset, seed",
     [  # etude1 seed 8 is A B C A
         ("etude1", 1), ("etude1", 2), ("etude1", 8), ("etude2", 1), ("etude2", 2),
-        ("etude1-exotic", 1), ("etude2-exotic", 1), ("etude1-messiaen", 1),
+        ("etude1-exotic", 1), ("etude2-exotic", 1), ("etude1-messiaen", 1), ("etude2-messiaen", 1),
     ],
 )
 def test_manifest_matches_its_snapshot(preset, seed):

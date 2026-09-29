@@ -37,6 +37,7 @@ CONTOUR_WEIGHTS = ("shift",)  # voicer weights that only a contour pattern needs
 NOTE_VALUES = {"32nd": 0.125, "16th": 0.25, "8th": 0.5, "quarter": 1.0}
 PLANING_FORBIDDEN = frozenset("MK")  # planing has no center to move or cadence to
 MODE_FORBIDDEN = frozenset("K")  # a mode has no dominant to cadence from
+SECTION_TABLES = {"graph": ("palette", "graph"), "mode": ("modal",)}  # what each kind of section needs
 # Messiaen's modes of limited transposition: semitones above the first degree.
 MESSIAEN_MODES = {
     1: (0, 2, 4, 6, 8, 10),
@@ -132,7 +133,7 @@ class Pattern:
 @dataclass(frozen=True)
 class Centers:
     start: tuple[float, ...]  # weight per pitch class, C = 0
-    start_mode: Mapping[str, float]
+    start_mode: Mapping[str, float]  # graph sections only; empty if left out
     moves: Mapping[str, float]
 
 
@@ -147,6 +148,8 @@ class Palette:
 @dataclass(frozen=True)
 class Modal:
     chord_types: tuple[str, ...]  # chord symbol suffixes such as "m7"; "|" stacks a major triad over another
+    optional_intervals: frozenset[int]  # as in Palette, for the generated chords
+    bass_step: Mapping[int, float]  # as in Graph, for the walk through a mode
 
 
 @dataclass(frozen=True)
@@ -184,11 +187,11 @@ class Config:
     fretboard: Fretboard
     voicer: VoicerSettings
     centers: Centers
-    palette: Palette
-    graph: Graph
+    palette: Palette | None  # graph sections' chords
+    graph: Graph | None  # graph sections' chord changes
     form: Form
     sections: Mapping[str, Section]
-    modal: Modal | None = None  # chord types for mode sections
+    modal: Modal | None  # mode sections' chords and chord changes
 
     @property
     def modes(self) -> frozenset[int]:
@@ -212,12 +215,9 @@ def parse_config_text(text: str, where: str = "config") -> Config:
 def parse_config(data: Mapping[str, Any]) -> Config:
     _check_keys(
         data,
-        required={
-            "notation", "meter", "pattern", "fretboard", "voicer", "centers", "palette", "graph", "form",
-            "sections",
-        },
+        required={"notation", "meter", "pattern", "fretboard", "voicer", "centers", "form", "sections"},
         where="config",
-        optional={"modal"},
+        optional={"palette", "graph", "modal"},
     )
     notation = _parse_notation(data["notation"])
     meter = _parse_meter(data["meter"])
@@ -225,8 +225,13 @@ def parse_config(data: Mapping[str, Any]) -> Config:
     pattern = _parse_pattern(data["pattern"], meter, fretboard)
     voicer = _parse_voicer(data["voicer"], fretboard, pattern)
     centers = _parse_centers(data["centers"])
-    palette = _parse_palette(data["palette"])
-    graph = _parse_graph(data["graph"], palette)
+    palette = _parse_palette(data["palette"]) if "palette" in data else None
+    graph = None
+    if "graph" in data:
+        if palette is None:
+            raise ConfigError("graph: its reference_paths need a [palette]")
+        graph = _parse_graph(data["graph"], palette)
+    modal = _parse_modal(data["modal"]) if "modal" in data else None
     sections_table = _as_table(data["sections"], "sections")
     if not sections_table:
         raise ConfigError("sections: at least one section is required")
@@ -234,12 +239,14 @@ def parse_config(data: Mapping[str, Any]) -> Config:
         name: _parse_section(name, table, fretboard) for name, table in sections_table.items()
     }
     for section in sections.values():
+        where = f"sections.{section.name}"
         if section.harmony == "planing" and pattern.contour:
-            raise ConfigError(f"sections.{section.name}: planing needs a string pattern, not a contour")
-    modal = _parse_modal(data["modal"]) if "modal" in data else None
-    for section in sections.values():
-        if section.harmony == "mode" and modal is None:
-            raise ConfigError(f"sections.{section.name}: a mode section needs a [modal] table of chord_types")
+            raise ConfigError(f"{where}: planing needs a string pattern, not a contour")
+        for table in SECTION_TABLES.get(section.harmony, ()):
+            if table not in data:
+                raise ConfigError(f"{where}: a {section.harmony} section needs a [{table}] table")
+        if section.harmony == "graph" and not centers.start_mode:
+            raise ConfigError(f"{where}: a graph section needs [centers] start_mode")
     form = _parse_form(data["form"], sections)
     return Config(notation, meter, pattern, fretboard, voicer, centers, palette, graph, form, sections, modal)
 
@@ -415,7 +422,7 @@ def _parse_pattern(value: Any, meter: Meter, fretboard: Fretboard) -> Pattern:
 
 def _parse_centers(value: Any) -> Centers:
     t = _as_table(value, "centers")
-    _check_keys(t, required={"start", "start_mode", "moves"}, where="centers")
+    _check_keys(t, required={"start", "moves"}, where="centers", optional={"start_mode"})
     start_table = _weights(t["start"], "centers.start")
     other = start_table.pop("other", 0.0)
     start = [other] * 12
@@ -431,7 +438,7 @@ def _parse_centers(value: Any) -> Centers:
         start[pc] = weight
     if not any(start):
         raise ConfigError("centers.start: at least one weight must be positive")
-    start_mode = _weights(t["start_mode"], "centers.start_mode", allowed=MODES)
+    start_mode = _weights(t["start_mode"], "centers.start_mode", allowed=MODES) if "start_mode" in t else {}
     moves = _weights(t["moves"], "centers.moves", allowed=CENTER_MOVES)
     return Centers(tuple(start), start_mode, moves)
 
@@ -444,12 +451,7 @@ def _parse_palette(value: Any) -> Palette:
         pitch_class(tonic)
     except ValueError as e:
         raise ConfigError(f"palette.tonic: {e}") from e
-    optional = frozenset(
-        _as_int(i, "palette.optional_intervals")
-        for i in _as_list(t["optional_intervals"], "palette.optional_intervals")
-    )
-    if not all(1 <= i <= 11 for i in optional):
-        raise ConfigError("palette.optional_intervals: each must be 1 to 11 semitones above the root")
+    optional = _parse_optional_intervals(t["optional_intervals"], "palette.optional_intervals")
     lists = {}
     for mode in MODES:
         chords = tuple(_as_str(c, f"palette.{mode}") for c in _as_list(t[mode], f"palette.{mode}"))
@@ -465,12 +467,7 @@ def _parse_palette(value: Any) -> Palette:
 def _parse_graph(value: Any, palette: Palette) -> Graph:
     t = _as_table(value, "graph")
     _check_keys(t, required={"bass_step", "reference_bonus", "reference_paths"}, where="graph")
-    raw_steps = _weights(t["bass_step"], "graph.bass_step")
-    bass_step = {}
-    for key, weight in raw_steps.items():
-        if not key.isdigit() or not 0 <= int(key) <= 6:
-            raise ConfigError(f"graph.bass_step: key {key!r} must be a semitone count from 0 to 6")
-        bass_step[int(key)] = weight
+    bass_step = _parse_bass_step(t["bass_step"], "graph.bass_step")
     reference_bonus = _as_number(t["reference_bonus"], "graph.reference_bonus")
     if reference_bonus < 0:
         raise ConfigError("graph.reference_bonus: must not be negative")
@@ -489,14 +486,31 @@ def _parse_graph(value: Any, palette: Palette) -> Graph:
 
 def _parse_modal(value: Any) -> Modal:
     t = _as_table(value, "modal")
-    _check_keys(t, required={"chord_types"}, where="modal")
+    _check_keys(t, required={"chord_types", "optional_intervals", "bass_step"}, where="modal")
     chord_types = tuple(_as_str(c, "modal.chord_types") for c in _as_list(t["chord_types"], "modal.chord_types"))
     if not chord_types:
         raise ConfigError("modal.chord_types: must not be empty")
     duplicates = sorted({c for c in chord_types if chord_types.count(c) > 1})
     if duplicates:
         raise ConfigError(f"modal.chord_types: repeated types {', '.join(map(repr, duplicates))}")
-    return Modal(chord_types)
+    optional = _parse_optional_intervals(t["optional_intervals"], "modal.optional_intervals")
+    return Modal(chord_types, optional, _parse_bass_step(t["bass_step"], "modal.bass_step"))
+
+
+def _parse_optional_intervals(value: Any, where: str) -> frozenset[int]:
+    optional = frozenset(_as_int(i, where) for i in _as_list(value, where))
+    if not all(1 <= i <= 11 for i in optional):
+        raise ConfigError(f"{where}: each must be 1 to 11 semitones above the root")
+    return optional
+
+
+def _parse_bass_step(value: Any, where: str) -> dict[int, float]:
+    bass_step = {}
+    for key, weight in _weights(value, where).items():
+        if not key.isdigit() or not 0 <= int(key) <= 6:
+            raise ConfigError(f"{where}: key {key!r} must be a semitone count from 0 to 6")
+        bass_step[int(key)] = weight
+    return bass_step
 
 
 def _parse_form(value: Any, sections: Mapping[str, Section]) -> Form:

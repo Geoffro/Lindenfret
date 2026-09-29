@@ -8,7 +8,7 @@ import pytest
 
 from lindenfret.chords import ChordError, build_chord_table
 from lindenfret.cli import main
-from lindenfret.config import MESSIAEN_MODES, Palette, load_config
+from lindenfret.config import MESSIAEN_MODES, load_config
 from lindenfret.fretboard import Voicer
 from lindenfret.harmony import MOVES, Center, ChordGraph, Harmonizer, HarmonyError
 from lindenfret.lsystem import Production
@@ -18,19 +18,28 @@ CONFIGS = Path(__file__).resolve().parent.parent / "configs"
 PRESET = CONFIGS / "etude1-messiaen.toml"
 CONFIG = load_config(PRESET)
 TABLE = chord_table(CONFIG)
-GRAPH = ChordGraph(TABLE, CONFIG.graph, CONFIG.palette)
+GRAPH = ChordGraph(TABLE, CONFIG)
 VOICER = Voicer(CONFIG.fretboard, CONFIG.pattern, CONFIG.voicer)
-PALETTE = Palette("E", frozenset({7}), ("Em",), ("E",))
+ALL_MODES = load_config(CONFIGS / "etude2-messiaen.toml")
 C, E, G_SHARP = 0, 4, 8
 LOW = (0, 3)  # G# has no playable tonic chord here in mode 2, mode 3, minor or major; E has
+
+
+def modal(chord_types):
+    return dataclasses.replace(CONFIG.modal, chord_types=tuple(chord_types))
 
 
 def symbols(table, mode, first):
     return [s.symbol for s in table.chords[(mode, first)]]
 
 
+def lies_in_its_mode(bar):
+    number = int(bar.center.mode.split()[1])
+    return bar.chord.pitch_classes <= {(bar.center.tonic + step) % 12 for step in MESSIAEN_MODES[number]}
+
+
 def test_a_mode_gets_every_chord_of_each_type_that_lies_in_it():
-    table = build_chord_table(PALETTE, ["", "7", "dim7"], [2])
+    table = build_chord_table(None, modal(["", "7", "dim7"]), [2])
     assert symbols(table, "mode 2", C) == [
         "C", "C7", "Cdim7", "C#dim7", "Eb", "Eb7", "D#dim7", "Edim7",
         "F#", "F#7", "F#dim7", "Gdim7", "A", "A7", "Adim7", "A#dim7",
@@ -50,22 +59,22 @@ def test_every_first_degree_lists_the_same_chords_transposed(number):
 
 
 def test_roots_take_the_simplest_name_and_tones_are_spelled_by_interval():
-    in_e = symbols(build_chord_table(PALETTE, ["", "m", "+", "dim7", "7#9"], [2, 3]), "mode 2", E)
+    in_e = symbols(build_chord_table(None, modal(["", "m", "+", "dim7", "7#9"]), [2, 3]), "mode 2", E)
     assert {"Db", "C#m", "Fdim7"} <= set(in_e) and not {"C#", "Dbm", "E#dim7"} & set(in_e)
-    table = build_chord_table(PALETTE, ["", "+", "7#9"], [2, 3])
+    table = build_chord_table(None, modal(["", "+", "7#9"]), [2, 3])
     e7_sharp9 = next(s for s in table.chords[("mode 2", E)] if s.symbol == "E7#9")
     assert dict(e7_sharp9.spelling)[7] == "F##"
     assert "B+" in symbols(table, "mode 3", E)  # B D# F##, not Cb Eb G
 
 
 def test_polychords_spell_shared_tones_one_way():
-    in_e = symbols(build_chord_table(PALETTE, ["|"], [2]), "mode 2", E)
+    in_e = symbols(build_chord_table(None, modal(["|"]), [2]), "mode 2", E)
     assert "C#|E" in in_e and "Db|E" not in in_e  # C# E# G# over E G# B
     assert "E|C#" in in_e  # E G# B over C# E# G#
 
 
 def test_polychords_need_an_upper_chord_that_adds_tones():
-    table = build_chord_table(PALETTE, ["|", "m|"], [2])
+    table = build_chord_table(None, modal(["|", "m|"]), [2])
     assert "Cm|C" in symbols(table, "mode 2", C)  # a split third
     assert "C|C" not in symbols(table, "mode 2", C)
 
@@ -76,7 +85,22 @@ def test_polychords_need_an_upper_chord_that_adds_tones():
 )
 def test_bad_chord_types_raise(chord_type, message):
     with pytest.raises(ChordError, match=f"modal.chord_types: .*{message}"):
-        build_chord_table(PALETTE, ["", chord_type], [2])
+        build_chord_table(None, modal(["", chord_type]), [2])
+
+
+def test_a_modes_first_degree_is_named_like_a_major_key():
+    table = build_chord_table(None, modal([""]), [2])
+    assert [table.center_name("mode 2", pc) for pc in (1, 6, 8)] == ["Db mode 2", "F# mode 2", "Ab mode 2"]
+
+
+def test_mode_walks_weigh_bass_steps_by_the_modal_table():
+    config = dataclasses.replace(CONFIG, modal=dataclasses.replace(CONFIG.modal, bass_step={1: 10.0}))
+    graph = ChordGraph(TABLE, config)
+    e_mode_2, e_minor = Center(E, "mode 2"), Center(E, "minor")
+    in_mode = symbols(TABLE, "mode 2", E)
+    assert graph.weight((e_mode_2, in_mode.index("E")), e_mode_2, in_mode.index("Fdim7")) == 10.0
+    minor = CONFIG.palette.minor  # a graph section's walk still weighs by [graph]
+    assert graph.weight((e_minor, minor.index("Em")), e_minor, minor.index("F#7")) == CONFIG.graph.bass_step[2]
 
 
 def test_tonics_are_the_chords_on_the_first_degree():
@@ -85,9 +109,9 @@ def test_tonics_are_the_chords_on_the_first_degree():
 
 
 def test_a_mode_with_no_chord_on_its_first_degree_fails():
-    table = build_chord_table(CONFIG.palette, ["", "m"], [5])  # C Db F Gb G B holds no triad
+    table = build_chord_table(CONFIG.palette, modal(["", "m"]), [5])  # C Db F Gb G B holds no triad
     with pytest.raises(HarmonyError, match="mode 5: none of"):
-        ChordGraph(table, CONFIG.graph, CONFIG.palette)
+        ChordGraph(table, CONFIG)
 
 
 def harmonizer(moves=None, seed=0):
@@ -147,9 +171,7 @@ def test_mode_section_chords_lie_in_their_mode(piece):
     bars = [bar for bar in piece.bars if piece.sections[bar.section].section.harmony == "mode"]
     assert bars and bars[0].role == "tonic"
     for bar in bars:
-        number = int(bar.center.mode.split()[1])
-        steps = {(bar.center.tonic + step) % 12 for step in MESSIAEN_MODES[number]}
-        assert bar.chord.pitch_classes <= steps, bar.chord.symbol
+        assert lies_in_its_mode(bar), bar.chord.symbol
         assert bar.center.mode == bars[0].center.mode
 
 
@@ -190,6 +212,32 @@ def test_inspect_lists_a_modes_chords(capsys):
 def test_inspect_says_when_no_chord_type_lies_in_a_mode(capsys):
     assert main(["inspect", "--config", str(PRESET), "--center", "E mode 5"]) == 0
     assert capsys.readouterr().out == "E mode 5: none of the [modal] chord types lies in the mode\n"
+
+
+def test_the_all_mode_preset_is_etude2_apart_from_the_harmony():
+    base = load_config(CONFIGS / "etude2.toml")
+    for table in ("meter", "pattern", "fretboard", "voicer", "form"):
+        assert getattr(ALL_MODES, table) == getattr(base, table), table
+    assert ALL_MODES.centers.start == base.centers.start
+    for name, section in ALL_MODES.sections.items():
+        assert (section.length, section.region) == (base.sections[name].length, base.sections[name].region)
+
+
+def test_every_bar_of_the_all_mode_preset_lies_in_its_mode():
+    table, voicer = chord_table(ALL_MODES), Voicer(ALL_MODES.fretboard, ALL_MODES.pattern, ALL_MODES.voicer)
+    for seed in range(4):
+        bars = plan_piece(ALL_MODES, seed, table, voicer).bars
+        assert all(lies_in_its_mode(bar) for bar in bars)
+
+
+def test_inspect_without_a_palette(capsys):
+    preset = str(CONFIGS / "etude2-messiaen.toml")
+    assert main(["inspect", "--config", preset, "--chord", "A7b9", "--top", "1"]) == 0
+    assert "required C# G A Bb" in capsys.readouterr().out  # [modal] lets the fifth, E, be left out
+    assert main(["inspect", "--config", preset, "--center", "A mode 2"]) == 0
+    assert capsys.readouterr().out.startswith("A mode 2: the [modal] chord types in it")
+    assert main(["inspect", "--config", preset, "--center", "Am"]) == 2
+    assert "a key center needs a [palette] table" in capsys.readouterr().err
 
 
 def test_inspect_needs_a_modal_table_for_a_mode(capsys):

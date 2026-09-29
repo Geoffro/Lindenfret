@@ -9,6 +9,7 @@ from lindenfret.config import ConfigError, load_config, note_to_midi, parse_conf
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONTOUR_PRESET = PRESET.with_name("etude2.toml")
 MODE_PRESET = PRESET.with_name("etude1-messiaen.toml")
+ALL_MODE_PRESET = PRESET.with_name("etude2-messiaen.toml")
 
 
 def load(path):
@@ -78,6 +79,10 @@ def test_note_names():
         (lambda d: d["palette"].update(optional_intervals=[12]), "1 to 11 semitones"),
         (lambda d: d["graph"]["reference_paths"].append(["Em", "Gm"]), "Gm not in the palette"),
         (lambda d: d["graph"]["bass_step"].update({"7": 1}), "semitone count from 0 to 6"),
+        (lambda d: d.pop("graph"), "sections.A: a graph section needs a [graph] table"),
+        (lambda d: [d.pop("palette"), d.pop("graph")], "sections.A: a graph section needs a [palette] table"),
+        (lambda d: d.pop("palette"), "graph: its reference_paths need a [palette]"),
+        (lambda d: d["centers"].pop("start_mode"), "sections.A: a graph section needs [centers] start_mode"),
         (lambda d: d["form"]["rules"]["S"].append({"to": "A D", "weight": 1}), "no [sections.D]"),
         (lambda d: d["form"]["rules"]["S"].append({"to": "A b", "weight": 1}), "must be capital letters"),
         (lambda d: d["sections"].update(a=d["sections"]["A"]), "single capital letter"),
@@ -134,6 +139,22 @@ def test_the_mode_preset_loads():
     assert load_config(PRESET).modal is None and load_config(PRESET).modes == set()
 
 
+def test_a_preset_of_only_mode_sections_needs_no_palette_or_graph():
+    config = load_config(ALL_MODE_PRESET)
+    assert {section.harmony for section in config.sections.values()} == {"mode"}
+    assert (config.palette, config.graph, config.centers.start_mode) == (None, None, {})
+
+
+def test_a_config_of_only_planing_sections_needs_no_chord_tables(data):
+    def planing_only(d):
+        del d["palette"], d["graph"], d["centers"]["start_mode"]
+        d["sections"] = {"B": d["sections"]["B"]}
+        d["form"]["rules"]["S"] = [{"to": "B", "weight": 1}]
+
+    config = parse_with(data, planing_only)
+    assert (config.palette, config.graph, config.modal) == (None, None, None)
+
+
 def test_a_mode_weighted_zero_is_not_built():
     assert parse_with(load(MODE_PRESET), lambda d: d["sections"]["B"]["modes"].update({"3": 0})).modes == {2}
 
@@ -145,6 +166,9 @@ def test_a_mode_weighted_zero_is_not_built():
         (lambda d: d["modal"].update(chord_types=[]), "modal.chord_types: must not be empty"),
         (lambda d: d["modal"]["chord_types"].append("m"), "repeated types 'm'"),
         (lambda d: d["modal"].update(types=["m"]), "modal: unknown types"),
+        (lambda d: d["modal"].pop("bass_step"), "modal: missing bass_step"),
+        (lambda d: d["modal"].update(optional_intervals=[0]), "modal.optional_intervals: each must be 1 to 11"),
+        (lambda d: d["modal"]["bass_step"].update({"7": 1}), "modal.bass_step: key '7'"),
         (lambda d: d["sections"]["B"].pop("modes"), "sections.B: missing modes"),
         (lambda d: d["sections"]["B"]["modes"].update({"8": 1}), "unknown 8; expected 1, 2, 3"),
         (lambda d: d["sections"]["A"].update(modes={"2": 1}), "sections.A: unknown modes"),

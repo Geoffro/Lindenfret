@@ -2,7 +2,7 @@
 
 ## Summary
 
-Lindenfret is a Python package that turns a seed and a config file into a playable variant of one of Villa-Lobos's études, Etude 1 or Etude 2. Each étude has a preset, and an exotic variant whose palette adds richer chords and polychords. A third Etude 1 preset draws its middle section from Messiaen's modes. Each variant keeps the original's right-hand pattern and rhythm. Everything else is generated from the seed, and nothing is copied from the original. An L-system generates the form, harmony, modulations, planing shapes and ending, and a fretboard voicer makes sure every bar can be played. Each run writes MIDI and MusicXML notation, plus a manifest that regenerates the piece exactly.
+Lindenfret is a Python package that turns a seed and a config file into a playable variant of one of Villa-Lobos's études, Etude 1 or Etude 2. Each étude has a preset, and an exotic variant whose palette adds richer chords and polychords. Two more presets use Messiaen's modes: Etude 1 in its middle section, and Etude 2 throughout. Each variant keeps the original's right-hand pattern and rhythm. Everything else is generated from the seed, and nothing is copied from the original. An L-system generates the form, harmony, modulations, planing shapes and ending, and a fretboard voicer makes sure every bar can be played. Each run writes MIDI and MusicXML notation, plus a manifest that regenerates the piece exactly.
 
 The musical model comes from analyses of MIDI files of the originals, summarized under [Etude 1](#the-reference-etude-1) and [Etude 2](#the-reference-etude-2). The build plan is in [plan.md](plan.md).
 
@@ -114,7 +114,7 @@ Constraints, fixed for now:
 
 | Constraint | Value |
 | --- | --- |
-| Target | Etudes 1 and 2: a preset each, an exotic variant of each, and Etude 1 with Messiaen's modes |
+| Target | Etudes 1 and 2: a preset each, and an exotic and a Messiaen variant of each |
 | Right-hand pattern | The étude's own, fixed in its preset |
 | Rhythm | The original's: 16 sixteenth notes per bar in 4/4, each bar played twice |
 | Key | No key signature and no fixed tonal center; the center moves |
@@ -261,7 +261,7 @@ A `Center` is a tonic pitch class plus a mode, minor or major. It is harmonic st
 - **Graph mode** thinks in chords relative to the current center. The palette and its graph are written in the palette's `tonic` (E for Etude 1, A for Etude 2) and transposed to the center when used; minor and major centers each have their own palette. The weights favor stepwise bass motion, and for Etude 2 also motion by fifth. Sections start on their center's tonic, `K` cadences to the current center, and `M` modulates.
 
   Tonic and dominant chords come from the palette, not the config. The tonic chords are those rooted on the tonic with the mode's third (in Etude 1's minor palette, Em, Em/G and Em/B). The dominants are chords on the fifth with a major third (B7 and B7/F♯; Bsus4 has no third). The walk picks among whichever of them are playable in the current region. If none is, the bar takes an ordinary step instead and `inspect` notes why.
-- **Mode sections** (`harmony = "mode"`) draw on Messiaen's modes of limited transposition. The section weights the modes it may use, as in `modes = { 2 = 3, 3 = 1 }`. Its chords are generated, not listed: every chord of the preset's `[modal] chord_types` (suffixes such as `m7` or `dim7`), on any root, whose tones all lie in the mode. A type containing `|` stacks two, so `"|"` puts a major triad over another. The walk is graph mode's over these chords:
+- **Mode sections** (`harmony = "mode"`) draw on Messiaen's modes of limited transposition. The section weights the modes it may use, as in `modes = { 2 = 3, 3 = 1 }`. Its chords are generated, not listed: every chord of the preset's `[modal] chord_types` (suffixes such as `m7` or `dim7`), on any root, whose tones all lie in the mode. A type containing `|` stacks two, so `"|"` puts a major triad over another. `[modal]` also has its own `optional_intervals` and `bass_step`, so a preset of only mode sections needs no `[palette]`, `[graph]` or `start_mode`. The walk is graph mode's over these chords:
   - **Start**: the mode's first degree is the tonic where the last graph or mode section ended, if a chord on it is playable in the section's region, so E minor can open onto E mode 2. Otherwise it is drawn from `[centers] start`. The mode is drawn by the section's weights and kept for the whole section.
   - **Bars**: the first bar plays a chord on the first degree, and steps are weighted by bass motion. `M` draws from the `[centers] moves` weights, leaving out relative and parallel.
   - **Spelling**: a root takes the name that spells no tone two ways, then has the fewest accidentals itself, then gives the chord the fewest double accidentals and then accidentals. So C°7 is `Cdim7`, with B𝄫, D♭ major is `Db`, but C♯ minor is `C#m`, and C♯ major over E major is `C#|E`. Tones are spelled by interval from the root, so `E7#9` has F𝄪.
@@ -279,7 +279,7 @@ Palette entries are chord symbols (`Em`, `F#m7b5/E`, `Bsus4`, `Emaj7 add #11`). 
 - **Polychords** stack two symbols, upper first: `D|C` is D major over C major. The lower chord gives the root and bass. music21 has no polychord symbols, so `chords.py` parses the parts separately.
 - **Symbols to avoid**: music21 misreads `E69`; write `E6 add 9`.
 - **Key spelling**: each center takes the tonic spelling with fewer key-signature accidentals (D♭ major, G♯ minor). Between equal key signatures, it takes the one that gives the palette fewer double sharps and flats (E♭ minor, F♯ major). A chord that would still need a double accidental is respelled on its own.
-- **Required tones**: every chord tone except those at the palette's `optional_intervals` above the root, plus the bass. A polychord's upper chord is required whole, since its tones are tensions over the lower root: `D|C` may leave out G but not A, its thirteenth. Every preset leaves out only the perfect fifth.
+- **Required tones**: every chord tone except those at the `optional_intervals` above the root (the palette's, or `[modal]`'s for mode chords), plus the bass. A polychord's upper chord is required whole, since its tones are tensions over the lower root: `D|C` may leave out G but not A, its thirteenth. Every preset leaves out only the perfect fifth.
 - **Tensions** are off in the first version, so voicings use chord tones only. When enabled, they come from the current center's scale and sound only on `tension_strings`.
 
 **Spelling without a key signature.** The notation has no key signature, so every pitch is written with its accidental, spelled from its chord symbol after transposition. Planing bars have no chord symbol. Their open strings keep plain names, and `score.py` tries every enharmonic spelling of the shape's fretted notes. It keeps the one with the fewest letters shared by two different notes (no B♯ beside an open B), then letters stacked in thirds, then the fewest accidentals. The reference's shape reads G♯ B D F, then A♯ C♯ E G, then D♯ F♯ A C as it slides down.
@@ -359,6 +359,7 @@ LSystemsGenerator/
     etude1-exotic.toml           each preset with a wider palette: added tones, altered dominants, polychords
     etude2-exotic.toml
     etude1-messiaen.toml         Etude 1 with a mode section in place of planing
+    etude2-messiaen.toml         Etude 2 with every section in a mode
   curated.toml                   keepers from listening passes
   reference/
     Villa-Lobos_Etude_No1b.mid   MIDIs of the originals
@@ -419,7 +420,7 @@ LSystemsGenerator/
 - **Reference tests**: the facts in both reference sections are checked against the MIDI. Feeding Etude 1's own fingerings for bars 1–44 through `render.py` reproduces the reference's pitch in every 16th-note slot. For Etude 2, every pattern bar's ladder is playable under the preset and renders back to the reference's pitches. Both presets' accents are their reference's medians.
 - **Pattern test**: every rendered bar plays exactly the configured strings or contour, in order, and is repeated as configured.
 - **Exotic presets**: each matches its base preset apart from the harmony, adds no chord that is unplayable in any center, and uses polychords.
-- **Mode tests**: generated chords lie in their mode and come in the same order on every first degree, roots and shared tones are spelled as described, `M` keeps the mode, and a mode section starts on the previous tonic while the next graph section continues from the last graph section, or from the mode's tonic if there is none.
+- **Mode tests**: generated chords lie in their mode and come in the same order on every first degree, roots and shared tones are spelled as described, `M` keeps the mode, and a mode section starts on the previous tonic while the next graph section continues from the last graph section, or from the mode's tonic if there is none. The all-mode Etude 2 preset matches etude2.toml apart from its harmony.
 - **Golden snapshots**: manifests for fixed seeds of every preset are checked in under `tests/golden/`, without the config text and git commit. A diff means behavior changed; to accept it on purpose, delete the snapshot and rerun the tests to write a new one.
 - **Export round trip**: re-parse the MusicXML with music21 and confirm bar count, pitches, rhythm, beaming and directions survive, and that there is no key signature. The MIDI's tempo map carries the ritardandos.
 - **Ladder tests**: each broken rule is named, the reference's own ladders and slides the hand could put off are found, and a fretted note stops ringing when the hand moves.

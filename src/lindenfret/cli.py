@@ -100,16 +100,16 @@ def _inspect(args: argparse.Namespace) -> None:
         region = (0, config.fretboard.max_fret)
         if args.region:
             region = parse_region(args.region, config.fretboard.max_fret, "--region")
-        spec = parse_chord(args.chord, config.palette.optional_intervals)
+        chords = config.palette or config.modal  # a planing-only config has neither
+        spec = parse_chord(args.chord, chords.optional_intervals) if chords else parse_chord(args.chord)
         print(fingering_report(voicer, spec, region, args.top))
     elif args.center:
         mode, tonic, number = _parse_center(args.center)
-        if number is None:
-            table = build_chord_table(config.palette)
-        elif config.modal is None:
-            raise ConfigError("--center: a mode center needs a [modal] table of chord_types in the config")
-        else:
-            table = build_chord_table(config.palette, config.modal.chord_types, [number])
+        if number is None and config.palette is None:
+            raise ConfigError("--center: a key center needs a [palette] table in the config")
+        if number is not None and config.modal is None:
+            raise ConfigError("--center: a mode center needs a [modal] table in the config")
+        table = build_chord_table(config.palette, config.modal, [] if number is None else [number])
         print(center_report(voicer, table, mode, tonic))
     else:
         print(piece_report(plan_piece(config, _seed(args.seed), voicer=voicer)))

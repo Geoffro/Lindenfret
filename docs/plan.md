@@ -13,7 +13,7 @@ Eight phases, built in order. Each ends in a gate you can check from the command
 | 4. Villa-Lobos idiom | Planing mode, Etude 1 preset, batch and curation | A listening pass over 20 seeds finds variants worth practicing |
 | 5. Etude 2 | Preset-level palette key, optional tones and notation; contour patterns over ladders of stops; Etude 2 reference analysis and preset | Etude 1's plans are unchanged apart from its preset hash, every Etude 2 reference bar is playable under its preset, and a listening pass over 20 Etude 2 seeds finds variants worth practicing |
 | 6. Exotic harmony | Polychord symbols; an exotic preset for each étude, with a wider palette and harmony weights | Every added chord is playable in every center, and a listening pass over 20 seeds of each finds variants worth practicing |
-| 7. Messiaen's modes | Mode sections with chords generated from chord types; an Etude 1 preset with a mode section in place of planing | The tonal presets' plans are unchanged, and a listening pass over 20 seeds finds variants worth practicing |
+| 7. Messiaen's modes | Mode sections with chords generated from chord types; an Etude 1 preset with a mode section in place of planing, and an Etude 2 preset in modes throughout | The tonal presets' plans are unchanged, and a listening pass over 20 seeds finds variants worth practicing |
 
 ## Phase 0: Foundation
 
@@ -82,5 +82,7 @@ Eight phases, built in order. Each ends in a gate you can check from the command
 - [x] Mode sections: `harmony = "mode"` with weighted `modes`, and a `[modal] chord_types` table. Chords are generated from the types, the walk keeps the mode, and `M` moves its first degree.
 - [x] `configs/etude1-messiaen.toml`: etude1.toml with section B in modes 2 and 3 instead of planing.
 - [x] `inspect --center 'E mode 2'` lists a mode's chords and where each is playable.
-- [x] Batch of 20 generated: `lindenfret batch --config configs/etude1-messiaen.toml --count 20 --first-seed 1` wrote `out/etude1-messiaen-1` to `-20`.
-- [ ] Listen to the batch, tune `chord_types` and the mode weights by ear, and record keepers in `curated.toml`.
+- [x] `[palette]`, `[graph]` and `[centers] start_mode` are needed only by graph sections; `[modal]` has its own `optional_intervals` and `bass_step`.
+- [x] `configs/etude2-messiaen.toml`: etude2.toml with every section in a mode: A in modes 2 and 3, B travelling through 3 and 7, C in 2 and 6.
+- [x] Batches of 20 generated: `lindenfret batch --config configs/etude1-messiaen.toml --count 20 --first-seed 1`, and the same for `etude2-messiaen.toml`, wrote `out/etude1-messiaen-1` to `-20` and `out/etude2-messiaen-1` to `-20`.
+- [ ] Listen to both batches, tune `chord_types` and the mode weights by ear, and record keepers in `curated.toml`.

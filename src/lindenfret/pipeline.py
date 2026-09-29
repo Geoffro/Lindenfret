@@ -40,8 +40,7 @@ def derive_form(config: Config, seed: int) -> tuple[str, ...]:
 
 def chord_table(config: Config) -> ChordTable:
     """The palette in every center, plus the chords of every mode the sections can draw."""
-    chord_types = config.modal.chord_types if config.modal else ()
-    return build_chord_table(config.palette, chord_types, config.modes)
+    return build_chord_table(config.palette, config.modal, config.modes)
 
 
 def plan_piece(
@@ -49,7 +48,7 @@ def plan_piece(
 ) -> Piece:
     table = table or chord_table(config)
     voicer = voicer or Voicer(config.fretboard, config.pattern, config.voicer)
-    graph = ChordGraph(table, config.graph, config.palette)
+    graph = ChordGraph(table, config)
     form = derive_form(config, seed)
     sections = tuple(
         plan_section(index, config.sections[name], stage_rng(seed, f"section.{index}"))

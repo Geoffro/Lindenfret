@@ -24,7 +24,7 @@ from dataclasses import dataclass
 
 from music21 import harmony, interval, key, pitch
 
-from lindenfret.config import MESSIAEN_MODES, MODES, ConfigError, Palette, mode_name
+from lindenfret.config import MESSIAEN_MODES, MODES, ConfigError, Modal, Palette, mode_name
 
 PERFECT_FIFTH = 7
 
@@ -60,7 +60,7 @@ class ChordSpec:
 class ChordTable:
     """Each center's chords, keyed by (mode, tonic pitch class): the palette's, or a Messiaen mode's."""
 
-    written_in: str  # the tonic the palette is written in
+    written_in: str | None  # the tonic the palette is written in; None without a palette
     tonic_names: Mapping[tuple[str, int], str]
     chords: Mapping[tuple[str, int], tuple[ChordSpec, ...]]
 
@@ -77,40 +77,42 @@ def parse_chord(figure: str, optional: Collection[int] = (PERFECT_FIFTH,)) -> Ch
 
 
 def build_chord_table(
-    palette: Palette, chord_types: Sequence[str] = (), modes: Collection[int] = ()
+    palette: Palette | None, modal: Modal | None = None, modes: Collection[int] = ()
 ) -> ChordTable:
-    """Transpose the minor and major palettes from their tonic to all 12 centers.
+    """The palette transposed to all 12 centers, and the chords of each of the
+    Messiaen `modes` on all 12 first degrees.
 
-    Each center is named with whichever enharmonic tonic has the fewest
-    accidentals in its key signature (D-flat major, not C-sharp major); between
-    equal key signatures, the one that gives the palette fewer double sharps and
-    flats. A chord that still needs a double accidental is respelled on its own
-    if another tonic spelling avoids it.
+    Each minor or major center is named with whichever enharmonic tonic has the
+    fewest accidentals in its key signature (D-flat major, not C-sharp major);
+    between equal key signatures, the one that gives the palette fewer double
+    sharps and flats. A chord that still needs a double accidental is respelled
+    on its own if another tonic spelling avoids it.
 
-    Each of the Messiaen `modes` gets, on every first degree, the chords of
-    `chord_types` that lie in it, named like the major center on that degree.
+    A mode's first degree is named like the major key with the fewest
+    accidentals, F# rather than Gb where they tie.
     """
     tonic_names: dict[tuple[str, int], str] = {}
     chords: dict[tuple[str, int], tuple[ChordSpec, ...]] = {}
-    for mode in MODES:
-        parsed = [_parse(figure) for figure in getattr(palette, mode)]
-        for tonic in range(12):
-            options = [
-                _transpose_palette(parsed, palette, name, mode) for name in _names_for(tonic)
-            ]
-            best = min(options, key=lambda o: (o.key_accidentals, o.doubles))
-            tonic_names[(mode, tonic)] = _display(best.tonic)
-            chords[(mode, tonic)] = tuple(
-                min((o.chords[i] for o in [best, *options]), key=lambda c: c.doubles).spec
-                for i in range(len(parsed))
-            )
+    if palette is not None:
+        for mode in MODES:
+            parsed = [_parse(figure) for figure in getattr(palette, mode)]
+            for tonic in range(12):
+                options = [
+                    _transpose_palette(parsed, palette, name, mode) for name in _names_for(tonic)
+                ]
+                best = min(options, key=lambda o: (o.key_accidentals, o.doubles))
+                tonic_names[(mode, tonic)] = _display(best.tonic)
+                chords[(mode, tonic)] = tuple(
+                    min((o.chords[i] for o in [best, *options]), key=lambda c: c.doubles).spec
+                    for i in range(len(parsed))
+                )
     for number in sorted(modes):
         mode = mode_name(number)
-        generated = _mode_chords(chord_types, MESSIAEN_MODES[number], palette.optional_intervals)
+        generated = _mode_chords(modal.chord_types, MESSIAEN_MODES[number], modal.optional_intervals)
         for first, specs in enumerate(generated):
-            tonic_names[(mode, first)] = tonic_names[("major", first)]
+            tonic_names[(mode, first)] = _display(min(_names_for(first), key=lambda n: abs(key.Key(n).sharps)))
             chords[(mode, first)] = specs
-    return ChordTable(palette.tonic, tonic_names, chords)
+    return ChordTable(palette.tonic if palette else None, tonic_names, chords)
 
 
 def _mode_chords(

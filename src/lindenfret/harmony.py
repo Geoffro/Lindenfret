@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 
 from lindenfret.chords import ChordSpec, ChordTable
-from lindenfret.config import CENTER_MOVES, MODES, Config, Graph, Palette, Section, mode_name, pitch_class
+from lindenfret.config import CENTER_MOVES, MODES, Config, Section, mode_name, pitch_class
 from lindenfret.fretboard import Region, Voicer, Voicing
 from lindenfret.interpret import SectionPlan
 
@@ -64,46 +64,51 @@ class Bar:
     shape: str = ""  # a planing bar's shape kind: "dim7", "augmented" or "any"
 
 
-ChordRef = tuple[Center, int]  # a chord by its center and palette index
+ChordRef = tuple[Center, int]  # a chord by its center and its index in that center's chords
 
 
 class ChordGraph:
     """Every center's chords, and the weight of moving between them."""
 
-    def __init__(self, table: ChordTable, graph: Graph, palette: Palette) -> None:
+    def __init__(self, table: ChordTable, config: Config) -> None:
         self.table = table
-        self.bass_step = graph.bass_step
-        self.reference_bonus = graph.reference_bonus
-        home = pitch_class(palette.tonic)
         self.tonics: dict[str, tuple[int, ...]] = {}
         self.dominants: dict[str, tuple[int, ...]] = {}
         self.reference_edges: dict[str, set[tuple[int, int]]] = {}
-        for mode in MODES:
-            specs = table.chords[(mode, home)]
-            third, other_third = (3, 4) if mode == "minor" else (4, 3)
-            self.tonics[mode] = tuple(
-                i for i, s in enumerate(specs)
-                if s.root == home
-                and (home + third) % 12 in s.pitch_classes
-                and (home + other_third) % 12 not in s.pitch_classes
-            )
-            fifth = (home + 7) % 12
-            self.dominants[mode] = tuple(
-                i for i, s in enumerate(specs) if s.root == fifth and (fifth + 4) % 12 in s.pitch_classes
-            )
-            if not self.tonics[mode]:
-                raise HarmonyError(f"palette.{mode}: no tonic chord (a {mode} chord rooted on {palette.tonic})")
-            if not self.dominants[mode]:
-                raise HarmonyError(f"palette.{mode}: no dominant chord (a chord on the fifth with a major third)")
-            figures = getattr(palette, mode)
-            self.reference_edges[mode] = {
-                (figures.index(a), figures.index(b))
-                for path in graph.reference_paths
-                if all(c in figures for c in path)
-                for a, b in zip(path, path[1:])
-            }
+        self.bass_step: dict[str, Mapping[int, float]] = {}  # by center mode
+        self.reference_bonus = 0.0
+        palette, graph = config.palette, config.graph
+        if palette is not None and graph is not None:
+            self.reference_bonus = graph.reference_bonus
+            home = pitch_class(palette.tonic)
+            for mode in MODES:
+                self.bass_step[mode] = graph.bass_step
+                specs = table.chords[(mode, home)]
+                third, other_third = (3, 4) if mode == "minor" else (4, 3)
+                self.tonics[mode] = tuple(
+                    i for i, s in enumerate(specs)
+                    if s.root == home
+                    and (home + third) % 12 in s.pitch_classes
+                    and (home + other_third) % 12 not in s.pitch_classes
+                )
+                fifth = (home + 7) % 12
+                self.dominants[mode] = tuple(
+                    i for i, s in enumerate(specs) if s.root == fifth and (fifth + 4) % 12 in s.pitch_classes
+                )
+                if not self.tonics[mode]:
+                    raise HarmonyError(f"palette.{mode}: no tonic chord (a {mode} chord rooted on {palette.tonic})")
+                if not self.dominants[mode]:
+                    raise HarmonyError(f"palette.{mode}: no dominant chord (a chord on the fifth with a major third)")
+                figures = getattr(palette, mode)
+                self.reference_edges[mode] = {
+                    (figures.index(a), figures.index(b))
+                    for path in graph.reference_paths
+                    if all(c in figures for c in path)
+                    for a, b in zip(path, path[1:])
+                }
         # A Messiaen mode's chords come in the same order on every first degree; its tonics are those rooted there.
         for mode in sorted({mode for mode, _ in table.chords} - set(MODES)):
+            self.bass_step[mode] = config.modal.bass_step
             self.tonics[mode] = tuple(i for i, s in enumerate(table.chords[(mode, 0)]) if s.root == 0)
             if not self.tonics[mode]:
                 raise HarmonyError(f"{mode}: none of [modal] chord_types gives a chord on the mode's first degree")
@@ -121,7 +126,7 @@ class ChordGraph:
         prev_center, prev_index = previous
         a = self.chords(prev_center)[prev_index].bass
         b = self.chords(center)[index].bass
-        weight = self.bass_step.get(min((a - b) % 12, (b - a) % 12), 0.0)
+        weight = self.bass_step[center.mode].get(min((a - b) % 12, (b - a) % 12), 0.0)
         if prev_center == center and (prev_index, index) in self.reference_edges.get(center.mode, ()):
             weight += self.reference_bonus
         return weight

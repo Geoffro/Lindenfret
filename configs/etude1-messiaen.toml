@@ -53,10 +53,12 @@ reference_paths = [
   ["F#7", "C#m7b5/G", "F#dim7", "B7"],                       # bars 47-54
 ]
 
-[modal]
-# Chord types for mode sections: every chord of these types, on any root, whose
-# tones all lie in the mode. "|" stacks a major triad over another, e.g. F#|C.
+[modal]                  # mode sections' chords and chord changes
+# Every chord of these types, on any root, whose tones all lie in the mode.
+# "|" stacks a major triad over another, e.g. F#|C.
 chord_types = ["", "m", "+", "7", "m7", "maj7", "dim7", "7b9", "7#9", "|"]
+optional_intervals = [7]     # as in [palette]
+bass_step = { 0 = 1, 1 = 4, 2 = 3, 3 = 2, 4 = 1, 5 = 1, 6 = 1 }   # as in [graph]
 
 [form]
 axiom = "S"
