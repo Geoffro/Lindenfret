@@ -2,7 +2,7 @@
 
 Design: [design.md](design.md)
 
-Seven phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDIs, as summarized in the design: the pattern, rhythm, form, palette, planing idiom and left-hand limits. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
+Eight phases, built in order. Each ends in a gate you can check from the command line or by ear. The musical facts the generator needs come from the reference MIDIs, as summarized in the design: the pattern, rhythm, form, palette, planing idiom and left-hand limits. Nothing from the reference is copied into a generated piece. So no phase waits on transcribing the score.
 
 | Phase | Scope | Exit gate |
 | --- | --- | --- |
@@ -13,6 +13,7 @@ Seven phases, built in order. Each ends in a gate you can check from the command
 | 4. Villa-Lobos idiom | Planing mode, Etude 1 preset, batch and curation | A listening pass over 20 seeds finds variants worth practicing |
 | 5. Etude 2 | Preset-level palette key, optional tones and notation; contour patterns over ladders of stops; Etude 2 reference analysis and preset | Etude 1's plans are unchanged apart from its preset hash, every Etude 2 reference bar is playable under its preset, and a listening pass over 20 Etude 2 seeds finds variants worth practicing |
 | 6. Exotic harmony | Polychord symbols; an exotic preset for each étude, with a wider palette and harmony weights | Every added chord is playable in every center, and a listening pass over 20 seeds of each finds variants worth practicing |
+| 7. Messiaen's modes | Mode sections with chords generated from chord types; an Etude 1 preset with a mode section in place of planing | The tonal presets' plans are unchanged, and a listening pass over 20 seeds finds variants worth practicing |
 
 ## Phase 0: Foundation
 
@@ -75,3 +76,11 @@ Seven phases, built in order. Each ends in a gate you can check from the command
 - [x] `configs/etude1-exotic.toml` and `configs/etude2-exotic.toml`: each base palette plus added-tone tonics, Lydian, Dorian and Phrygian polychords, altered dominants and a tritone substitute. Held basses and tritone moves weigh double, moves by a major third are twice as likely, and the reference bonus is halved.
 - [x] Batches of 20 generated: `lindenfret batch --config configs/etude1-exotic.toml --count 20 --first-seed 1`, and the same for `etude2-exotic.toml`, wrote `out/etude1-exotic-1` to `-20` and `out/etude2-exotic-1` to `-20`.
 - [ ] Listen to 20 seeds of each, prune chords that don't fit by ear, and record keepers in `curated.toml`.
+
+## Phase 7: Messiaen's modes
+
+- [x] Mode sections: `harmony = "mode"` with weighted `modes`, and a `[modal] chord_types` table. Chords are generated from the types, the walk keeps the mode, and `M` moves its first degree.
+- [x] `configs/etude1-messiaen.toml`: etude1.toml with section B in modes 2 and 3 instead of planing.
+- [x] `inspect --center 'E mode 2'` lists a mode's chords and where each is playable.
+- [x] Batch of 20 generated: `lindenfret batch --config configs/etude1-messiaen.toml --count 20 --first-seed 1` wrote `out/etude1-messiaen-1` to `-20`.
+- [ ] Listen to the batch, tune `chord_types` and the mode weights by ear, and record keepers in `curated.toml`.

@@ -8,6 +8,7 @@ from lindenfret.config import ConfigError, load_config, note_to_midi, parse_conf
 
 PRESET = Path(__file__).resolve().parent.parent / "configs" / "etude1.toml"
 CONTOUR_PRESET = PRESET.with_name("etude2.toml")
+MODE_PRESET = PRESET.with_name("etude1-messiaen.toml")
 
 
 def load(path):
@@ -122,6 +123,38 @@ def test_the_contour_preset_loads():
 def test_bad_contour_configs_name_the_problem(edit, message):
     with pytest.raises(ConfigError, match=message):
         parse_with(load(CONTOUR_PRESET), edit)
+
+
+def test_the_mode_preset_loads():
+    config = load_config(MODE_PRESET)
+    assert config.sections["B"].harmony == "mode"
+    assert config.sections["B"].modes == {2: 3, 3: 1}
+    assert config.modes == {2, 3}
+    assert config.modal.chord_types[:3] == ("", "m", "+")
+    assert load_config(PRESET).modal is None and load_config(PRESET).modes == set()
+
+
+def test_a_mode_weighted_zero_is_not_built():
+    assert parse_with(load(MODE_PRESET), lambda d: d["sections"]["B"]["modes"].update({"3": 0})).modes == {2}
+
+
+@pytest.mark.parametrize(
+    "edit, message",
+    [
+        (lambda d: d.pop("modal"), "sections.B: a mode section needs a [modal] table"),
+        (lambda d: d["modal"].update(chord_types=[]), "modal.chord_types: must not be empty"),
+        (lambda d: d["modal"]["chord_types"].append("m"), "repeated types 'm'"),
+        (lambda d: d["modal"].update(types=["m"]), "modal: unknown types"),
+        (lambda d: d["sections"]["B"].pop("modes"), "sections.B: missing modes"),
+        (lambda d: d["sections"]["B"]["modes"].update({"8": 1}), "unknown 8; expected 1, 2, 3"),
+        (lambda d: d["sections"]["A"].update(modes={"2": 1}), "sections.A: unknown modes"),
+        (lambda d: d["sections"]["B"]["rules"]["F"].append({"to": "FK", "weight": 1}), "a mode has no dominant"),
+        (lambda d: d["sections"]["B"].update(harmony="modal"), "expected 'graph', 'planing' or 'mode'"),
+    ],
+)
+def test_bad_mode_configs_name_the_problem(edit, message):
+    with pytest.raises(ConfigError, match=message.replace("[", r"\[")):
+        parse_with(load(MODE_PRESET), edit)
 
 
 def test_toml_syntax_errors_are_config_errors(tmp_path):

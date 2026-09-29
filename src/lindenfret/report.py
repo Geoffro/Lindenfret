@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from lindenfret.alphabet import bar_count
 from lindenfret.chords import ChordSpec, ChordTable
+from lindenfret.config import MODES
 from lindenfret.fretboard import Region, Voicer, fret_windows
 from lindenfret.harmony import Bar
 from lindenfret.pipeline import Piece
@@ -82,14 +83,17 @@ def fingering_report(voicer: Voicer, spec: ChordSpec, region: Region, top: int) 
 
 
 def center_report(voicer: Voicer, table: ChordTable, mode: str, tonic: int) -> str:
-    """How many fingerings each palette chord has at each hand position in one center."""
+    """How many fingerings each of a center's chords has at each hand position."""
     windows = fret_windows(voicer.fretboard, voicer.pattern)
     neck = (0, voicer.fretboard.max_fret)
     specs = table.chords[(mode, tonic)]
+    if not specs:
+        return f"{table.center_name(mode, tonic)}: none of the [modal] chord types lies in the mode"
     width = max(len(s.symbol) for s in specs) + 2
     header = "".join(f"{f'{low}-{high}':>7}" for low, high in windows)
+    source = f"the {mode} palette transposed from {table.written_in}" if mode in MODES else "the [modal] chord types in it"
     lines = [
-        f"{table.center_name(mode, tonic)}: the {mode} palette transposed from {table.written_in}",
+        f"{table.center_name(mode, tonic)}: {source}",
         "fingerings that pass the hard rules, per fret window:",
         f"{'chord':<{width}}{header}",
     ]

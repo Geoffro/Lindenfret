@@ -1,20 +1,21 @@
 """Tonal centers, the chord graph, and the walk that turns section plans into bars.
 
 A center is a tonic pitch class and a mode. Graph sections walk the chord
-graph of the current center, one chord per bar; planing sections have no
-center and only track how far their shape has slid. Every chord and center
-offered must be playable in the current fret region, so the walk routes
-around what the voicer can't finger there.
+graph of the current center, one chord per bar. Mode sections walk the same
+way, over the chords of a Messiaen mode whose first degree is the tonic.
+Planing sections have no center and only track how far their shape has slid.
+Every chord and center offered must be playable in the current fret region,
+so the walk routes around what the voicer can't finger there.
 """
 
 from __future__ import annotations
 
 import random
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 
 from lindenfret.chords import ChordSpec, ChordTable
-from lindenfret.config import CENTER_MOVES, MODES, Config, Graph, Palette, pitch_class
+from lindenfret.config import CENTER_MOVES, MODES, Config, Graph, Palette, Section, mode_name, pitch_class
 from lindenfret.fretboard import Region, Voicer, Voicing
 from lindenfret.interpret import SectionPlan
 
@@ -22,7 +23,7 @@ from lindenfret.interpret import SectionPlan
 @dataclass(frozen=True)
 class Center:
     tonic: int  # pitch class, C = 0
-    mode: str  # "minor" or "major"
+    mode: str  # "minor", "major", or a Messiaen mode such as "mode 2"
 
 
 def _other_mode(mode: str) -> str:
@@ -42,6 +43,7 @@ MOVES: dict[str, Callable[[Center], Center]] = {
     "semitone_down": lambda c: Center((c.tonic + 11) % 12, c.mode),
 }
 assert set(MOVES) == set(CENTER_MOVES)
+MODE_CHANGES = ("relative", "parallel")  # moves between minor and major; a mode section keeps its mode
 
 
 class HarmonyError(ValueError):
@@ -66,7 +68,7 @@ ChordRef = tuple[Center, int]  # a chord by its center and palette index
 
 
 class ChordGraph:
-    """The palette's chords in every center, and the weight of moving between them."""
+    """Every center's chords, and the weight of moving between them."""
 
     def __init__(self, table: ChordTable, graph: Graph, palette: Palette) -> None:
         self.table = table
@@ -100,6 +102,11 @@ class ChordGraph:
                 if all(c in figures for c in path)
                 for a, b in zip(path, path[1:])
             }
+        # A Messiaen mode's chords come in the same order on every first degree; its tonics are those rooted there.
+        for mode in sorted({mode for mode, _ in table.chords} - set(MODES)):
+            self.tonics[mode] = tuple(i for i, s in enumerate(table.chords[(mode, 0)]) if s.root == 0)
+            if not self.tonics[mode]:
+                raise HarmonyError(f"{mode}: none of [modal] chord_types gives a chord on the mode's first degree")
 
     def chords(self, center: Center) -> tuple[ChordSpec, ...]:
         return self.table.chords[(center.mode, center.tonic)]
@@ -115,7 +122,7 @@ class ChordGraph:
         a = self.chords(prev_center)[prev_index].bass
         b = self.chords(center)[index].bass
         weight = self.bass_step.get(min((a - b) % 12, (b - a) % 12), 0.0)
-        if prev_center == center and (prev_index, index) in self.reference_edges[center.mode]:
+        if prev_center == center and (prev_index, index) in self.reference_edges.get(center.mode, ()):
             weight += self.reference_bonus
         return weight
 
@@ -158,7 +165,9 @@ class Harmonizer:
         options = [
             (name, MOVES[name](center))
             for name, weight in self.centers.moves.items()
-            if weight > 0 and playable(MOVES[name](center), region)
+            if weight > 0
+            and (center.mode in MODES or name not in MODE_CHANGES)
+            and playable(MOVES[name](center), region)
         ]
         if not options:
             return None
@@ -166,21 +175,64 @@ class Harmonizer:
         return self.rng.choices(options, weights=weights)[0]
 
     def section_center(self, previous: Center | None, region: Region) -> tuple[Center, str]:
-        """The center a graph section starts in, and the event that describes it."""
+        """The center a graph section starts in, and the event that describes it.
+
+        After a graph section's center it is one move away. After a mode's, it
+        keeps the tonic, in minor or major by the start weights.
+        """
         if previous is None:
             center = self.start_center(region)
             return center, f"start: {self.graph.name(center)}"
-        moved = self.move(previous, region, need_tonic=True)
-        if moved is None:
-            center = self.start_center(region)
-            return center, f"new center {self.graph.name(center)}: no move fits frets {_frets(region)}"
-        name, center = moved
-        return center, f"section: {name} to {self.graph.name(center)}"
+        if previous.mode in MODES:
+            moved = self.move(previous, region, need_tonic=True)
+            if moved is not None:
+                name, center = moved
+                return center, f"section: {name} to {self.graph.name(center)}"
+            why = "no move fits"
+        else:
+            kept = self._keep_tonic(previous.tonic, self.centers.start_mode, region)
+            if kept is not None:
+                return kept, f"section: {self.graph.name(kept)}"
+            why = "no mode on the previous tonic fits"
+        center = self.start_center(region)
+        return center, f"new center {self.graph.name(center)}: {why} frets {_frets(region)}"
+
+    def mode_center(self, previous: Center | None, section: Section) -> tuple[Center, str]:
+        """The center a mode section starts in, and the event that describes it.
+
+        The mode's first degree is `previous`'s tonic if any of the section's
+        modes has a chord on it playable in the section's region; otherwise it
+        is drawn from the start weights.
+        """
+        region = section.region
+        weights = {mode_name(number): w for number, w in section.modes.items() if w > 0}
+        if previous is not None:
+            kept = self._keep_tonic(previous.tonic, weights, region)
+            if kept is not None:
+                return kept, f"section: {self.graph.name(kept)}"
+        options = [Center(tonic, mode) for mode in weights for tonic in range(12) if self.centers.start[tonic] > 0]
+        options = [c for c in options if self._tonic_playable(c, region)]
+        if not options:
+            raise HarmonyError(
+                f"sections.{section.name}: no mode has a chord on its first degree playable in frets {_frets(region)}"
+            )
+        center = self.rng.choices(options, weights=[self.centers.start[c.tonic] * weights[c.mode] for c in options])[0]
+        if previous is None:
+            return center, f"start: {self.graph.name(center)}"
+        return center, f"new center {self.graph.name(center)}: no mode on the previous tonic fits frets {_frets(region)}"
+
+    def _keep_tonic(self, tonic: int, weights: Mapping[str, float], region: Region) -> Center | None:
+        """A center on `tonic` in a weighted mode whose tonic chord is playable in `region`, or None."""
+        options = [Center(tonic, mode) for mode, weight in weights.items() if weight > 0]
+        options = [c for c in options if self._tonic_playable(c, region)]
+        if not options:
+            return None
+        return self.rng.choices(options, weights=[weights[c.mode] for c in options])[0]
 
     # --- sections ---------------------------------------------------------
 
     def walk(self, plan: SectionPlan, center: Center, event: str) -> tuple[list[Bar], Center]:
-        """The bars of a graph section, and the center it ends in."""
+        """The bars of a graph or mode section, and the center it ends in."""
         base = plan.section.region
         state = _State(center, None, 0)
         stack: list[_State] = []

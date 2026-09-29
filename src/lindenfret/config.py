@@ -10,14 +10,14 @@ from __future__ import annotations
 import re
 import tomllib
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
 from lindenfret.alphabet import BAR_LENGTHS, BAR_SYMBOLS
 from lindenfret.lsystem import Production
 
-HarmonyMode = Literal["graph", "planing"]
+HarmonyMode = Literal["graph", "planing", "mode"]
 
 MODES = ("minor", "major")
 CENTER_MOVES = (
@@ -36,6 +36,17 @@ VOICER_WEIGHTS = ("movement", "span", "open_strings", "doubling")
 CONTOUR_WEIGHTS = ("shift",)  # voicer weights that only a contour pattern needs
 NOTE_VALUES = {"32nd": 0.125, "16th": 0.25, "8th": 0.5, "quarter": 1.0}
 PLANING_FORBIDDEN = frozenset("MK")  # planing has no center to move or cadence to
+MODE_FORBIDDEN = frozenset("K")  # a mode has no dominant to cadence from
+# Messiaen's modes of limited transposition: semitones above the first degree.
+MESSIAEN_MODES = {
+    1: (0, 2, 4, 6, 8, 10),
+    2: (0, 1, 3, 4, 6, 7, 9, 10),
+    3: (0, 2, 3, 4, 6, 7, 8, 10, 11),
+    4: (0, 1, 2, 5, 6, 7, 8, 11),
+    5: (0, 1, 5, 6, 7, 11),
+    6: (0, 2, 4, 5, 6, 8, 10, 11),
+    7: (0, 1, 2, 3, 5, 6, 7, 8, 9, 11),
+}
 MAX_FRET_LIMIT = 24
 
 _STEPS = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
@@ -134,6 +145,11 @@ class Palette:
 
 
 @dataclass(frozen=True)
+class Modal:
+    chord_types: tuple[str, ...]  # chord symbol suffixes such as "m7"; "|" stacks a major triad over another
+
+
+@dataclass(frozen=True)
 class Graph:
     bass_step: Mapping[int, float]  # weight by bass motion in semitones, 0 to 6
     reference_bonus: float
@@ -155,8 +171,9 @@ class Section:
     length: tuple[int, int]  # bars before repetition
     harmony: HarmonyMode
     region: tuple[int, int]
-    shape_types: Mapping[str, float]  # planing only; empty for graph sections
+    shape_types: Mapping[str, float]  # planing only; empty otherwise
     open_strings: int | None  # planing only
+    modes: Mapping[int, float] = field(default_factory=dict)  # mode sections only: Messiaen mode weights
 
 
 @dataclass(frozen=True)
@@ -171,6 +188,12 @@ class Config:
     graph: Graph
     form: Form
     sections: Mapping[str, Section]
+    modal: Modal | None = None  # chord types for mode sections
+
+    @property
+    def modes(self) -> frozenset[int]:
+        """The Messiaen modes that some mode section can draw."""
+        return frozenset(n for s in self.sections.values() for n, weight in s.modes.items() if weight > 0)
 
 
 def load_config(path: str | Path) -> Config:
@@ -194,6 +217,7 @@ def parse_config(data: Mapping[str, Any]) -> Config:
             "sections",
         },
         where="config",
+        optional={"modal"},
     )
     notation = _parse_notation(data["notation"])
     meter = _parse_meter(data["meter"])
@@ -212,8 +236,12 @@ def parse_config(data: Mapping[str, Any]) -> Config:
     for section in sections.values():
         if section.harmony == "planing" and pattern.contour:
             raise ConfigError(f"sections.{section.name}: planing needs a string pattern, not a contour")
+    modal = _parse_modal(data["modal"]) if "modal" in data else None
+    for section in sections.values():
+        if section.harmony == "mode" and modal is None:
+            raise ConfigError(f"sections.{section.name}: a mode section needs a [modal] table of chord_types")
     form = _parse_form(data["form"], sections)
-    return Config(notation, meter, pattern, fretboard, voicer, centers, palette, graph, form, sections)
+    return Config(notation, meter, pattern, fretboard, voicer, centers, palette, graph, form, sections, modal)
 
 
 def parse_region(text: str, max_fret: int, where: str = "region") -> tuple[int, int]:
@@ -243,6 +271,11 @@ def pitch_class(name: str) -> int:
         raise ValueError(f"not a pitch class: {name!r}")
     step, alter = match.groups()
     return (_STEPS[step] + _ALTERS[alter]) % 12
+
+
+def mode_name(number: int) -> str:
+    """A Messiaen mode's name as a center mode, e.g. "mode 2"."""
+    return f"mode {number}"
 
 
 # --- tables ---------------------------------------------------------------
@@ -454,6 +487,18 @@ def _parse_graph(value: Any, palette: Palette) -> Graph:
     return Graph(bass_step, reference_bonus, tuple(paths))
 
 
+def _parse_modal(value: Any) -> Modal:
+    t = _as_table(value, "modal")
+    _check_keys(t, required={"chord_types"}, where="modal")
+    chord_types = tuple(_as_str(c, "modal.chord_types") for c in _as_list(t["chord_types"], "modal.chord_types"))
+    if not chord_types:
+        raise ConfigError("modal.chord_types: must not be empty")
+    duplicates = sorted({c for c in chord_types if chord_types.count(c) > 1})
+    if duplicates:
+        raise ConfigError(f"modal.chord_types: repeated types {', '.join(map(repr, duplicates))}")
+    return Modal(chord_types)
+
+
 def _parse_form(value: Any, sections: Mapping[str, Section]) -> Form:
     t = _as_table(value, "form")
     _check_keys(t, required={"axiom", "iterations", "rules"}, where="form")
@@ -480,11 +525,10 @@ def _parse_section(name: str, value: Any, fretboard: Fretboard) -> Section:
     if "harmony" not in t:
         raise ConfigError(f"{where}: missing harmony")
     harmony = _as_str(t["harmony"], f"{where}.harmony")
-    if harmony not in ("graph", "planing"):
-        raise ConfigError(f"{where}.harmony: expected 'graph' or 'planing'")
-    base_keys = {"axiom", "rules", "length", "harmony", "region"}
-    planing_keys = {"shape_types", "open_strings"}
-    _check_keys(t, required=base_keys | (planing_keys if harmony == "planing" else set()), where=where)
+    if harmony not in ("graph", "planing", "mode"):
+        raise ConfigError(f"{where}.harmony: expected 'graph', 'planing' or 'mode'")
+    extra_keys = {"planing": {"shape_types", "open_strings"}, "mode": {"modes"}}.get(harmony, set())
+    _check_keys(t, required={"axiom", "rules", "length", "harmony", "region"} | extra_keys, where=where)
 
     axiom = _strip(_as_str(t["axiom"], f"{where}.axiom"))
     rules = _parse_rules(t["rules"], f"{where}.rules")
@@ -498,6 +542,8 @@ def _parse_section(name: str, value: Any, fretboard: Fretboard) -> Section:
         _check_brackets(word, w)
         if harmony == "planing" and PLANING_FORBIDDEN & set(word):
             raise ConfigError(f"{w}: planing sections can't use M or K; they have no tonal center")
+        if harmony == "mode" and MODE_FORBIDDEN & set(word):
+            raise ConfigError(f"{w}: mode sections can't use K; a mode has no dominant")
     if not any(s in BAR_LENGTHS for s in _reachable(axiom, rules)):
         raise ConfigError(f"{where}: the grammar never produces a bar (F, H or K)")
 
@@ -517,8 +563,12 @@ def _parse_section(name: str, value: Any, fretboard: Fretboard) -> Section:
                 f"{where}.open_strings: must be between 0 and {fretboard.string_count - 3}; "
                 "a shape frets at least three strings"
             )
+    modes: dict[int, float] = {}
+    if harmony == "mode":
+        allowed = [str(n) for n in MESSIAEN_MODES]
+        modes = {int(n): w for n, w in _weights(t["modes"], f"{where}.modes", allowed=allowed).items()}
     return Section(
-        name, axiom, rules, (length[0], length[1]), harmony, region, shape_types, open_strings
+        name, axiom, rules, (length[0], length[1]), harmony, region, shape_types, open_strings, modes
     )
 
 
@@ -581,9 +631,11 @@ def _check_strings(strings: Sequence[int], count: int, where: str) -> None:
         raise ConfigError(f"{where}: strings are numbered 1 to {count}, got {bad}")
 
 
-def _check_keys(table: Mapping[str, Any], required: set[str], where: str) -> None:
+def _check_keys(
+    table: Mapping[str, Any], required: set[str], where: str, optional: set[str] = frozenset()
+) -> None:
     missing = sorted(required - table.keys())
-    unknown = sorted(table.keys() - required)
+    unknown = sorted(table.keys() - required - optional)
     if missing:
         raise ConfigError(f"{where}: missing {', '.join(missing)}")
     if unknown:

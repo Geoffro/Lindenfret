@@ -38,10 +38,16 @@ def derive_form(config: Config, seed: int) -> tuple[str, ...]:
     return tuple(words)
 
 
+def chord_table(config: Config) -> ChordTable:
+    """The palette in every center, plus the chords of every mode the sections can draw."""
+    chord_types = config.modal.chord_types if config.modal else ()
+    return build_chord_table(config.palette, chord_types, config.modes)
+
+
 def plan_piece(
     config: Config, seed: int, table: ChordTable | None = None, voicer: Voicer | None = None
 ) -> Piece:
-    table = table or build_chord_table(config.palette)
+    table = table or chord_table(config)
     voicer = voicer or Voicer(config.fretboard, config.pattern, config.voicer)
     graph = ChordGraph(table, config.graph, config.palette)
     form = derive_form(config, seed)
@@ -52,13 +58,19 @@ def plan_piece(
 
     harmonizer = Harmonizer(config, graph, voicer, stage_rng(seed, "harmony"))
     bars: list[Bar] = []
-    center: Center | None = None
+    center: Center | None = None  # where the last graph section ended
+    last: Center | None = None  # where the last graph or mode section ended
     for plan in sections:
         if plan.section.harmony == "planing":
             bars += harmonizer.planing(plan)
+        elif plan.section.harmony == "mode":
+            start, event = harmonizer.mode_center(last, plan.section)
+            section_bars, last = harmonizer.walk(plan, start, event)
+            bars += section_bars
         else:
-            center, event = harmonizer.section_center(center, plan.section.region)
+            center, event = harmonizer.section_center(center or last, plan.section.region)
             section_bars, center = harmonizer.walk(plan, center, event)
+            last = center
             bars += section_bars
 
     voicer_rng = stage_rng(seed, "voicer")
